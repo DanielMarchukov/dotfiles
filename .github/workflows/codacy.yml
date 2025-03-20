@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: del git submodules
-        run: "rm -rf ~/.config && rm -rf ~/.oh-my-zsh && rm -rf ~/.tmux/plugins/tpm"
+        run: "rm -rf /home/runner/work/dotfiles/dotfiles/.config && rm -rf /home/runner/work/dotfiles/dotfiles/.oh-my-zsh && rm -rf ~/home/runner/work/dotfiles/dotfiles/.tmux/plugins/tpm"
 
       # Execute Codacy Analysis CLI and generate a SARIF output with the security issues identified during the analysis
       - name: Run Codacy Analysis CLI
