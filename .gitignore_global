@@ -41,3 +41,4 @@ aaaa
 .local/
 .zsh_history
 .secrets
+.ssh
