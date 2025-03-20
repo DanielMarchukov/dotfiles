@@ -1,0 +1,5 @@
+[user]
+	name = Danielius Marciukovas
+	email = danielius.m@soliduslabs.com
+[core]
+	excludesfile = /Users/danielmarchukov/.gitignore_global

@@ -1,0 +1,96 @@
+[submodule ".config"]
+	path = .config
+	url = https://github.com/DanielMarchukov/.config.git
+[submodule ".oh-my-zsh"]
+	path = .oh-my-zsh
+	url = https://github.com/ohmyzsh/ohmyzsh.git
+[submodule ".tmux/plugins/tpm"]
+	path = .tmux/plugins/tpm
+	url = https://github.com/tmux-plugins/tpm.git
+[submodule ".local/share/nvim/lazy/LazyVim"]
+	path = .local/share/nvim/lazy/LazyVim
+	url = https://github.com/LazyVim/LazyVim.git
+[submodule ".local/share/nvim/lazy/SchemaStore.nvim"]
+	path = .local/share/nvim/lazy/SchemaStore.nvim
+	url = https://github.com/b0o/SchemaStore.nvim.git
+[submodule ".local/share/nvim/lazy/advanced-git-search.nvim"]
+	path = .local/share/nvim/lazy/advanced-git-search.nvim
+	url = https://github.com/aaronhallaert/advanced-git-search.nvim.git
+[submodule ".local/share/nvim/lazy/blink-cmp-copilot"]
+	path = .local/share/nvim/lazy/blink-cmp-copilot
+	url = https://github.com/giuxtaposition/blink-cmp-copilot.git
+[submodule ".local/share/nvim/lazy/blink.cmp"]
+	path = .local/share/nvim/lazy/blink.cmp
+	url = https://github.com/Saghen/blink.cmp.git
+[submodule ".local/share/nvim/lazy/bufferline.nvim"]
+	path = .local/share/nvim/lazy/bufferline.nvim
+	url = https://github.com/akinsho/bufferline.nvim.git
+[submodule ".local/share/nvim/lazy/catppuccin"]
+	path = .local/share/nvim/lazy/catppuccin
+	url = https://github.com/catppuccin/nvim.git
+[submodule ".local/share/nvim/lazy/conform.nvim"]
+	path = .local/share/nvim/lazy/conform.nvim
+	url = https://github.com/stevearc/conform.nvim.git
+[submodule ".local/share/nvim/lazy/copilot.lua"]
+	path = .local/share/nvim/lazy/copilot.lua
+	url = https://github.com/zbirenbaum/copilot.lua.git
+[submodule ".local/share/nvim/lazy/flash.nvim"]
+	path = .local/share/nvim/lazy/flash.nvim
+	url = https://github.com/folke/flash.nvim.git
+[submodule ".local/share/nvim/lazy/friendly-snippets"]
+	path = .local/share/nvim/lazy/friendly-snippets
+	url = https://github.com/rafamadriz/friendly-snippets.git
+[submodule ".local/share/nvim/lazy/fzf"]
+	path = .local/share/nvim/lazy/fzf
+	url = https://github.com/junegunn/fzf.vim.git
+[submodule ".local/share/nvim/lazy/gitlab.vim"]
+	path = .local/share/nvim/lazy/gitlab.vim
+	url = https://github.com/harrisoncramer/gitlab.nvim.git
+[submodule ".local/share/nvim/lazy/gitsigns.nvim"]
+	path = .local/share/nvim/lazy/gitsigns.nvim
+	url = https://github.com/lewis6991/gitsigns.nvim.git
+[submodule ".local/share/nvim/lazy/grug-far.nvim"]
+	path = .local/share/nvim/lazy/grug-far.nvim
+	url = https://github.com/MagicDuck/grug-far.nvim.git
+[submodule ".local/share/nvim/lazy/harpoon"]
+	path = .local/share/nvim/lazy/harpoon
+	url = https://github.com/ThePrimeagen/harpoon.git
+[submodule ".local/share/nvim/lazy/lazy.nvim"]
+	path = .local/share/nvim/lazy/lazy.nvim
+	url = https://github.com/folke/lazy.nvim.git
+[submodule ".local/share/nvim/lazy/lazydev.nvim"]
+	path = .local/share/nvim/lazy/lazydev.nvim
+	url = https://github.com/folke/lazydev.nvim.git
+[submodule ".local/share/nvim/lazy/lualine.nvim"]
+	path = .local/share/nvim/lazy/lualine.nvim
+	url = https://github.com/nvim-lualine/lualine.nvim.git
+[submodule ".local/share/nvim/lazy/markdown-preview.nvim"]
+	path = .local/share/nvim/lazy/markdown-preview.nvim
+	url = https://github.com/iamcco/markdown-preview.nvim.git
+[submodule ".local/share/nvim/lazy/mason-tool-installer.nvim"]
+	path = .local/share/nvim/lazy/mason-tool-installer.nvim
+	url = https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim.git
+[submodule ".local/share/nvim/lazy/mason.nvim"]
+	path = .local/share/nvim/lazy/mason.nvim
+	url = https://github.com/williamboman/mason.nvim.git
+[submodule ".local/share/nvim/lazy/min.ai"]
+	path = .local/share/nvim/lazy/min.ai
+	url = https://github.com/echasnovski/mini.ai.git
+[submodule ".local/share/nvim/lazy/mini.ai"]
+	path = .local/share/nvim/lazy/mini.ai
+	url = https://github.com/echasnovski/mini.ai.git
+[submodule ".local/share/nvim/lazy/mini.icons"]
+	path = .local/share/nvim/lazy/mini.icons
+	url = https://github.com/echasnovski/mini.icons.git
+[submodule ".local/share/nvim/lazy/mini.pairs"]
+	path = .local/share/nvim/lazy/mini.pairs
+	url = https://github.com/echasnovski/mini.pairs.git
+[submodule ".local/share/nvim/lazy/noice.nvim"]
+	path = .local/share/nvim/lazy/noice.nvim
+	url = https://github.com/folke/noice.nvim.git
+[submodule ".local/share/nvim/lazy/nui.nvim"]
+	path = .local/share/nvim/lazy/nui.nvim
+	url = https://github.com/MunifTanjim/nui.nvim.git
+[submodule ".local/share/nvim/lazy/nvim-jdtls"]
+	path = .local/share/nvim/lazy/nvim-jdtls
+	url = https://github.com/mfussenegger/nvim-jdtls.git
