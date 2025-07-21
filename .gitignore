@@ -4,6 +4,7 @@
 
 # Temporary zsh session files
 .zsh_sessions/*
+.zsh_sessions/
 !.zsh_sessions/_expiration_check_timestamp
 
 # History files that shouldn't be shared
