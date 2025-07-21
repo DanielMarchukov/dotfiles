@@ -1,0 +1,84 @@
+# Generated zsh completion dumps (machine-specific)
+.zcompdump*
+.zcompdump-*
+
+# Temporary zsh session files
+.zsh_sessions/*
+!.zsh_sessions/_expiration_check_timestamp
+
+# History files that shouldn't be shared
+.zsh_history
+.bash_history
+.python_history
+.rediscli_history
+
+# Vim temporary and history files
+.viminfo
+.vim/.netrwhist
+*.swp
+*.swo
+
+# Z command history (machine-specific paths)
+.z
+
+# Backup files
+*.bak
+*~
+
+# Cache directories
+.cache/
+.npm/
+.gem/
+.cargo/
+.gradle/
+
+# Development tools & IDEs
+.vscode/
+.idea/
+
+# Language-specific
+.pyenv/
+.rustup/
+.local/
+
+# Package managers
+node_modules/
+go/
+
+# Secret & sensitive files
+.secrets
+.ssh/
+.aws/
+.kube/
+.docker/
+
+# Machine-specific configuration
+.CFUserTextEncoding
+.DS_Store
+.lesshst
+.wget-hsts
+
+# Application data
+.angular-config.json
+.testcontainers.properties
+.offsetexplorer3/
+.redis-insight/
+.confluent/
+.codex/
+.supermaven/
+.hawtjni/
+
+# Trash
+.Trash/
+
+# Large directories that shouldn't be in dotfiles
+Applications/
+Desktop/
+Documents/
+Downloads/
+Library/
+Movies/
+Music/
+Pictures/
+Public/
+workspace/
