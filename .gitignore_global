@@ -1,44 +1,117 @@
+# macOS system files
 .DS_Store
-HEAD
-config
-description
-hooks
-info
-iterm2
-workspace
-Public
-Postman
-Pictures
-.sdkman
-.zcompdump-Danielius’s MacBook Pro-5.9
-Music
-Movies
-Google Drive
-Downloads
-Documents
-Desktop
-Library
-Applications
-aaaa
-.Trash
-.m2
-.aws
-.redis-insight
-.docker
-.angular-config.json
-.python_history
-.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 .CFUserTextEncoding
-.offsetexplorer3
-.testcontainers.properties
-.cache
-.lesshst
-.cargo
-.gem
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Package manager cache directories
 .npm/
+.cache/
+.gem/
+.cargo/
+.m2/
+.gradle/
+
+# Language-specific directories
 .pyenv/
 .rustup/
 .local/
+
+# dotenv environment variables file
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Optional caches
+.eslintcache
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Temporary files
+tmp/
+temp/
+
+# History files
+.python_history
 .zsh_history
-.secrets
-.ssh
+.bash_history
+.rediscli_history
+.lesshst
+
+# Application-specific
+.sqlfluff
+.angular-config.json
+.testcontainers.properties
+.offsetexplorer3/
+.redis-insight/
+.docker/
+.hawtjni/
+
+# Development tools
+.sdkman/
+
+# Security-sensitive directories
+.secrets/
+.ssh/
+.aws/
+.kube/
+
+# Large system directories that should never be in repos
+Applications/
+Desktop/
+Documents/
+Downloads/
+Library/
+Movies/
+Music/
+Pictures/
+Public/
+.Trash/
+workspace/
+iterm2/
+Postman/
+"Google Drive"/
+
+# Git internals (rarely needed globally but can be useful)
+HEAD
+config
+description
+hooks/
+info/
