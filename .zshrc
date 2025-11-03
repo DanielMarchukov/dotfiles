@@ -164,13 +164,6 @@ alias cvim="NVIM_APPNAME=NvChad nvim"
 alias kvim="NVIM_APPNAME=KickstartNvim nvim"
 
 # Kubernetes environments (AWS CLI should work on both platforms)
-alias staging='aws --profile default --region=us-east-1 eks update-kubeconfig --name=solidus-staging --role-arn arn:aws:iam::348980842327:role/eksReader'
-alias prod='aws --profile prod --region=us-east-1 eks update-kubeconfig --name=solidus-prod2-us-east-1 --role-arn arn:aws:iam::685404473957:role/eksReader'
-alias fidelity='aws --profile prod --region=us-east-2 eks update-kubeconfig --name=solidus-fidelity --role-arn arn:aws:iam::685404473957:role/eksReader'
-alias prod-asia='aws --profile prod --region=ap-southeast-1 eks update-kubeconfig --name=solidus-prod-ap-southeast-1 --role-arn arn:aws:iam::685404473957:role/eksReader'
-alias uat-eu='aws --profile default --region=eu-central-1 eks update-kubeconfig --name=solidus-uat2-eu-central-1 --role-arn arn:aws:iam::348980842327:role/eksReader'
-alias rnd='aws --profile default --region=us-east-1 eks update-kubeconfig --name=solidus-rnd --role-arn arn:aws:iam::348980842327:role/eksReader'
-alias prod-eu='aws --profile prod --region=eu-central-1 eks update-kubeconfig --name=solidus-prod-eu-central-1 --role-arn arn:aws:iam::685404473957:role/eksReader'
 
 # =============================================================================
 # SOLIDUS DEVELOPMENT FUNCTIONS
@@ -240,7 +233,7 @@ run-ucm() {
 }
 
 run-tardis() {
-  cd ~/workspace/ng-solidus-tardis && ng serve -c=local --port=4200
+  cd ~/workspace/ng-solidus-tardis && npm run start-max-local
 }
 
 run-csportal() {
@@ -339,3 +332,19 @@ runlocal-tmux() {
 if [[ "$PLATFORM" != "unknown" ]]; then
   echo "💻 Platform: $PLATFORM"
 fi
+
+
+
+
+alias devops='aws --profile default --region=us-east-1 eks update-kubeconfig --name=devops-eks  --role-arn arn:aws:iam::348980842327:role/eksAdmin'
+
+
+alias staging='aws --profile default --region=us-east-1 eks update-kubeconfig --name=solidus-staging --role-arn arn:aws:iam::348980842327:role/eksReader'
+alias prod='aws --profile prod --region=us-east-1 eks update-kubeconfig --name=solidus-prod2-us-east-1 --role-arn arn:aws:iam::685404473957:role/eksReader'
+alias fidelity='aws --profile prod --region=us-east-2 eks update-kubeconfig --name=solidus-fidelity --role-arn arn:aws:iam::685404473957:role/eksReader'
+alias prod-asia='aws --profile prod --region=ap-southeast-1 eks update-kubeconfig --name=solidus-prod-ap-southeast-1 --role-arn arn:aws:iam::685404473957:role/eksReader'
+alias uat-eu='aws --profile default --region=eu-central-1 eks update-kubeconfig --name=solidus-uat2-eu-central-1 --role-arn arn:aws:iam::348980842327:role/eksReader'
+alias rnd='aws --profile default --region=us-east-1 eks update-kubeconfig --name=solidus-rnd --role-arn arn:aws:iam::348980842327:role/eksReader'
+alias prod-eu='aws --profile prod --region=eu-central-1 eks update-kubeconfig --name=solidus-prod-eu-central-1 --role-arn arn:aws:iam::685404473957:role/eksReader'
+
+export PATH=~/.groundcover/bin:$PATH
