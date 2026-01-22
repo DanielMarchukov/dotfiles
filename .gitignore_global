@@ -86,6 +86,7 @@ temp/
 
 # Development tools
 .sdkman/
+.claude/
 
 # Security-sensitive directories
 .secrets/
@@ -110,8 +111,6 @@ Postman/
 "Google Drive"/
 
 # Git internals (rarely needed globally but can be useful)
-HEAD
-config
-description
-hooks/
-info/
+# Note: These are typically in .git/ which is already ignored
+# Removed 'config', 'HEAD', 'description', 'hooks/', 'info/' as they were
+# too broad and matched legitimate source directories like src/.../config/

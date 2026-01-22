@@ -25,29 +25,45 @@ fi
 # =============================================================================
 # PLATFORM-SPECIFIC PATHS AND ENVIRONMENT
 # =============================================================================
+# Set GOPATH without expensive go env call (use default location)
+export GOPATH="${GOPATH:-$HOME/go}"
+
 if [[ "$PLATFORM" == "mac" ]]; then
   # macOS-specific paths
-  export PATH=/opt/homebrew/opt/python@3.13/libexec/bin:$HOME/bin:$HOME/.local/bin:/usr/local/bin:$(go env GOPATH)/bin:$PATH
   export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
-  
+  export PATH=/opt/homebrew/opt/python@3.13/libexec/bin:$HOME/bin:$HOME/.local/bin:/usr/local/bin:$GOPATH/bin:$JAVA_HOME/bin:$PATH
+
   # macOS package manager paths
   if [[ -d "/opt/homebrew/bin" ]]; then
     export PATH="/opt/homebrew/bin:$PATH"
   fi
+
+  # Rustup (takes precedence over Homebrew rust)
+  if [[ -d "$HOME/.cargo/bin" ]]; then
+    export PATH="$HOME/.cargo/bin:$PATH"
+  fi
 elif [[ "$PLATFORM" == "linux" ]]; then
   # Linux-specific paths
-  export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$(go env GOPATH 2>/dev/null || echo "$HOME/go")/bin:$PATH
-  
+  export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$GOPATH/bin:$PATH
+
   # Common Java paths on Ubuntu
   if [[ -d "/usr/lib/jvm/java-21-openjdk-amd64" ]]; then
     export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
   elif [[ -d "/usr/lib/jvm/temurin-21-jdk-amd64" ]]; then
     export JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64
   fi
-  
+
+  # Add Java bin to PATH if JAVA_HOME is set
+  [[ -n "$JAVA_HOME" ]] && export PATH="$JAVA_HOME/bin:$PATH"
+
   # Linux package manager paths
   if [[ -d "/home/linuxbrew/.linuxbrew/bin" ]]; then
     export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+  fi
+
+  # Rustup (takes precedence over system rust)
+  if [[ -d "$HOME/.cargo/bin" ]]; then
+    export PATH="$HOME/.cargo/bin:$PATH"
   fi
 fi
 
@@ -70,14 +86,20 @@ fi
 # =============================================================================
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
-# Update settings
-zstyle ':omz:update' mode auto
-zstyle ':omz:update' frequency 1
+# Performance optimizations (based on profiling research)
+DISABLE_AUTO_UPDATE="true"           # Disable auto-update checks (55.73% → ~20% improvement)
+DISABLE_MAGIC_FUNCTIONS="true"       # Disable magic functions for better paste performance
+DISABLE_UPDATE_PROMPT="true"         # Don't prompt for updates
+DISABLE_COMPFIX="true"               # Skip permission checks on completion files
+zstyle ':omz:update' mode disabled   # Disable auto-update (use `omz update` manually)
+ZSH_COMPDUMP="$HOME/.cache/.zcompdump-$ZSH_VERSION"  # Move completion dump to cache
+DISABLE_UNTRACKED_FILES_DIRTY="true" # Faster git status in large repos
 
 # History settings
 HIST_STAMPS="yyyy-mm-dd"
 
 # Platform-specific plugins
+# Note: zsh-syntax-highlighting MUST be last for proper functionality
 if [[ "$PLATFORM" == "mac" ]]; then
   plugins=(
     git
@@ -85,10 +107,10 @@ if [[ "$PLATFORM" == "mac" ]]; then
     fzf-z
     zsh-autosuggestions
     web-search
-    zsh-syntax-highlighting
     you-should-use
     zsh-bat
     macos
+    zsh-syntax-highlighting
   )
 elif [[ "$PLATFORM" == "linux" ]]; then
   plugins=(
@@ -97,11 +119,23 @@ elif [[ "$PLATFORM" == "linux" ]]; then
     fzf-z
     zsh-autosuggestions
     web-search
-    zsh-syntax-highlighting
     you-should-use
     zsh-bat
     ubuntu
+    zsh-syntax-highlighting
   )
+fi
+
+# Smart completion initialization (30.76% → ~10% improvement)
+# Only rebuild completion cache once per day instead of every shell startup
+# Must be done BEFORE sourcing oh-my-zsh
+autoload -Uz compinit
+if [[ -n ${ZSH_COMPDUMP}(#qNmh+24) ]]; then
+  # Completion dump is older than 24 hours, regenerate it
+  compinit
+else
+  # Use cached completion dump (much faster)
+  compinit -C
 fi
 
 source $ZSH/oh-my-zsh.sh
@@ -112,17 +146,78 @@ source $ZSH/oh-my-zsh.sh
 # P10K theme
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-# SDKMAN (works on both platforms)
+# SDKMAN - Lazy load to improve startup time
 export SDKMAN_DIR="$HOME/.sdkman"
-[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+if [[ -s "$SDKMAN_DIR/bin/sdkman-init.sh" ]]; then
+  # Add SDKMAN candidates to PATH without loading the full init script
+  export PATH="$SDKMAN_DIR/candidates/*/current/bin:$PATH"
 
-# Modern CLI tools (check if they exist first)
-command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
-command -v thefuck >/dev/null 2>&1 && eval $(thefuck --alias)
-command -v gh >/dev/null 2>&1 && eval "$(gh copilot alias -- zsh)"
+  # Lazy load sdkman
+  sdk() {
+    unset -f sdk
+    source "$SDKMAN_DIR/bin/sdkman-init.sh"
+    sdk "$@"
+  }
+fi
 
-# Angular CLI autocompletion (if available)
-command -v ng >/dev/null 2>&1 && source <(ng completion script)
+# Modern CLI tools - Lazy load to improve startup time
+# Note: zoxide is integrated via oh-my-zsh z plugin, no separate init needed
+
+# thefuck - lazy load wrapper
+if command -v thefuck >/dev/null 2>&1; then
+  fuck() {
+    TF_PYTHONIOENCODING=$PYTHONIOENCODING
+    export TF_SHELL=zsh
+    export TF_ALIAS=fuck
+    export TF_SHELL_ALIASES=$(alias)
+    export TF_HISTORY=$(fc -ln -10)
+    export PYTHONIOENCODING=utf-8
+    TF_CMD=$(thefuck THEFUCK_ARGUMENT_PLACEHOLDER $@) && eval $TF_CMD
+    unset TF_HISTORY
+    export PYTHONIOENCODING=$TF_PYTHONIOENCODING
+    test -n "$TF_CMD" && print -s $TF_CMD
+  }
+fi
+
+# gh copilot - lazy load wrapper
+if command -v gh >/dev/null 2>&1; then
+  ghcs() {
+    eval "$(gh copilot suggest -t shell "$*")"
+  }
+  ghce() {
+    eval "$(gh copilot explain "$*")"
+  }
+fi
+
+# Angular CLI autocompletion - lazy load on first ng usage
+if command -v ng >/dev/null 2>&1; then
+  ng() {
+    unfunction ng
+    eval "$(command ng completion script)"
+    ng "$@"
+  }
+fi
+
+# FZF - fuzzy finder with keybindings and completion
+if command -v fzf >/dev/null 2>&1; then
+  # Set up fzf key bindings and fuzzy completion
+  if [[ -f ~/.fzf.zsh ]]; then
+    source ~/.fzf.zsh
+  else
+    # Homebrew FZF installation
+    [[ -f /opt/homebrew/opt/fzf/shell/completion.zsh ]] && source /opt/homebrew/opt/fzf/shell/completion.zsh
+    [[ -f /opt/homebrew/opt/fzf/shell/key-bindings.zsh ]] && source /opt/homebrew/opt/fzf/shell/key-bindings.zsh
+  fi
+
+  # FZF configuration for better UI
+  export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border --inline-info"
+
+  # Use fd instead of find if available
+  if command -v fd >/dev/null 2>&1; then
+    export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+    export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+  fi
+fi
 
 # Load secrets if available
 if [[ -f "$HOME/.secrets" ]]; then
@@ -328,23 +423,90 @@ runlocal-tmux() {
 # =============================================================================
 # PLATFORM INFORMATION
 # =============================================================================
-# Show platform info on startup (optional)
-if [[ "$PLATFORM" != "unknown" ]]; then
-  echo "💻 Platform: $PLATFORM"
+# Platform detection is complete - no output on startup for faster loading
+
+# =============================================================================
+# ADDITIONAL TOOLS
+# =============================================================================
+export PATH=~/.groundcover/bin:$PATH
+
+# =============================================================================
+# NVM LAZY LOADING (Performance optimization)
+# =============================================================================
+# This dramatically improves shell startup time by deferring NVM initialization
+# until it's actually needed. NVM will auto-load when you use node, npm, nvm, etc.
+export NVM_DIR="$HOME/.nvm"
+
+# Add node to PATH using cached default version (avoids slow ls command)
+if [[ -s "$NVM_DIR/alias/default" ]]; then
+  # Use the default alias to find the version quickly (add 'v' prefix if missing)
+  local DEFAULT_VERSION=$(cat $NVM_DIR/alias/default)
+  [[ $DEFAULT_VERSION != v* ]] && DEFAULT_VERSION="v$DEFAULT_VERSION"
+  export PATH="$NVM_DIR/versions/node/$DEFAULT_VERSION/bin:$PATH"
+elif [[ -d "$NVM_DIR/versions/node" ]]; then
+  # Fallback: add the first version found (using glob instead of ls)
+  local node_versions=($NVM_DIR/versions/node/*)
+  if [[ ${#node_versions[@]} -gt 0 ]]; then
+    export PATH="${node_versions[-1]}/bin:$PATH"
+  fi
 fi
 
+# Lazy load nvm (node/npm/npx are already in PATH, so only nvm needs lazy loading)
+nvm() {
+  unset -f nvm
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+  nvm "$@"
+}
 
+# =============================================================================
+# KUBERNETES ENVIRONMENT ALIASES
+# =============================================================================
+
+
+
+
+
+
+
+
+# =============================================================================
+# PERFORMANCE HELPERS
+# =============================================================================
+# Compile zsh config and plugins for faster loading
+zsh-compile() {
+  echo "Compiling .zshrc..."
+  zcompile ~/.zshrc
+
+  echo "Compiling oh-my-zsh files..."
+  for file in ~/.oh-my-zsh/**/*.zsh; do
+    [[ -f "$file" && ! -f "${file}.zwc" || "$file" -nt "${file}.zwc" ]] && zcompile "$file"
+  done
+
+  echo "Compiling custom plugins..."
+  for file in ~/.oh-my-zsh/custom/**/*.zsh; do
+    [[ -f "$file" && ! -f "${file}.zwc" || "$file" -nt "${file}.zwc" ]] && zcompile "$file"
+  done
+
+  echo "✅ Compilation complete! Restart your shell for best performance."
+}
+
+# Auto-compile .zshrc if it's been modified since last compile
+# Note: Disabled auto-compile as it adds 250-500ms to startup. Run `zsh-compile` manually when needed.
+# if [[ ! -f ~/.zshrc.zwc || ~/.zshrc -nt ~/.zshrc.zwc ]]; then
+#   zcompile ~/.zshrc &!
+# fi
 
 
 alias devops='aws --profile default --region=us-east-1 eks update-kubeconfig --name=devops-eks  --role-arn arn:aws:iam::348980842327:role/eksAdmin'
+alias esma='aws --profile esmacicd --region=eu-central-1 eks update-kubeconfig --name=solidus-esma --role-arn arn:aws:iam::696791035699:role/eksAdmin && pushd ~/dev/source && git pull && cd helm && curl --header "PRIVATE-TOKEN: $PTK" "https://gitlab.com/api/v4/projects/31892187/repository/files/helm%2Fvalues%2Eyaml/raw?ref=esma" > values.yaml && popd'
+alias schwab='aws eks update-kubeconfig --region us-east-1 --profile schwab --name=solidus-schwab --role-arn=arn:aws:iam::630609837183:role/eksAdmin && pushd ~/dev/source && git pull && cd helm && curl --header "PRIVATE-TOKEN: $PTK" "https://gitlab.com/api/v4/projects/31892187/repository/files/helm%2Fvalues%2Eyaml/raw?ref=schwab" > values.yaml && popd'
 
+alias staging='aws --profile default --region=us-east-1 eks update-kubeconfig --name=solidus-staging --role-arn arn:aws:iam::348980842327:role/eksMaintainer'
+alias prod='aws --profile prod --region=us-east-1 eks update-kubeconfig --name=solidus-prod2-us-east-1 --role-arn arn:aws:iam::685404473957:role/eksMaintainer'
+alias fidelity='aws --profile prod --region=us-east-2 eks update-kubeconfig --name=solidus-fidelity  --role-arn arn:aws:iam::685404473957:role/eksMaintainer'
+alias uat-eu='aws --profile default --region=eu-central-1 eks update-kubeconfig --name=solidus-uat2-eu-central-1 --role-arn arn:aws:iam::348980842327:role/eksMaintainer'
+alias rnd='aws --profile default --region=us-east-1 eks update-kubeconfig --name=solidus-rnd --role-arn arn:aws:iam::348980842327:role/eksMaintainer'
+alias prod-eu='aws --profile prod --region=eu-central-1 eks update-kubeconfig --name=solidus-prod-eu-central-1 --role-arn arn:aws:iam::685404473957:role/eksMaintainer'
+alias prod-asia='aws --profile prod --region=ap-southeast-1 eks update-kubeconfig --name=solidus-prod-ap-southeast-1 --role-arn arn:aws:iam::685404473957:role/eksMaintainer'
 
-alias staging='aws --profile default --region=us-east-1 eks update-kubeconfig --name=solidus-staging --role-arn arn:aws:iam::348980842327:role/eksReader'
-alias prod='aws --profile prod --region=us-east-1 eks update-kubeconfig --name=solidus-prod2-us-east-1 --role-arn arn:aws:iam::685404473957:role/eksReader'
-alias fidelity='aws --profile prod --region=us-east-2 eks update-kubeconfig --name=solidus-fidelity --role-arn arn:aws:iam::685404473957:role/eksReader'
-alias prod-asia='aws --profile prod --region=ap-southeast-1 eks update-kubeconfig --name=solidus-prod-ap-southeast-1 --role-arn arn:aws:iam::685404473957:role/eksReader'
-alias uat-eu='aws --profile default --region=eu-central-1 eks update-kubeconfig --name=solidus-uat2-eu-central-1 --role-arn arn:aws:iam::348980842327:role/eksReader'
-alias rnd='aws --profile default --region=us-east-1 eks update-kubeconfig --name=solidus-rnd --role-arn arn:aws:iam::348980842327:role/eksReader'
-alias prod-eu='aws --profile prod --region=eu-central-1 eks update-kubeconfig --name=solidus-prod-eu-central-1 --role-arn arn:aws:iam::685404473957:role/eksReader'
-
-export PATH=~/.groundcover/bin:$PATH

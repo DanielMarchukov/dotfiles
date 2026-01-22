@@ -3,3 +3,4 @@
 	email = danielius.m@soliduslabs.com
 [core]
 	excludesfile = /Users/danielmarchukov/.gitignore_global
+	autocrlf = input
