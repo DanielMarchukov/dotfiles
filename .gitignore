@@ -1,6 +1,7 @@
 # Generated zsh completion dumps (machine-specific)
 .zcompdump*
 .zcompdump-*
+.zshrc.zwc
 
 # Temporary zsh session files
 .zsh_sessions/*
@@ -36,15 +37,21 @@
 # Development tools & IDEs
 .vscode/
 .idea/
+.sonarlint/
+.sts4/
+.jmc/
 
 # Language-specific
 .pyenv/
 .rustup/
 .local/
+.nvm/
 
 # Package managers
 node_modules/
 go/
+.vcpkg/
+vcpkg/
 
 # Secret & sensitive files
 .secrets
@@ -52,6 +59,9 @@ go/
 .aws/
 .kube/
 .docker/
+.gnupg/
+.password-store/
+.gitlab/
 
 # Machine-specific configuration
 .CFUserTextEncoding
@@ -68,6 +78,14 @@ go/
 .codex/
 .supermaven/
 .hawtjni/
+.groundcover/
+.minikube/
+.vs-kubernetes/
+
+# AI assistants
+.claude.json
+.claude.json.backup
+.claude/
 
 # Trash
 .Trash/
