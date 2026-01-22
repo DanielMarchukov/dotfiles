@@ -101,3 +101,8 @@ Music/
 Pictures/
 Public/
 workspace/
+
+# Personal/project directories
+personal/
+falleco-dotfiles/
+bin/
