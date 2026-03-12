@@ -1,6 +1,12 @@
 [user]
-	name = Danielius Marciukovas
-	email = danielius.m@soliduslabs.com
+	name = DanielMarchukov
+	email = danielmarchukov@gmail.com
 [core]
-	excludesfile = /Users/danielmarchukov/.gitignore_global
+	excludesfile = /home/danmarchukov/.gitignore
 	autocrlf = input
+[credential "https://github.com"]
+	helper = 
+	helper = !/usr/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/usr/bin/gh auth git-credential

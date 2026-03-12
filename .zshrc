@@ -510,3 +510,25 @@ alias rnd='aws --profile default --region=us-east-1 eks update-kubeconfig --name
 alias prod-eu='aws --profile prod --region=eu-central-1 eks update-kubeconfig --name=solidus-prod-eu-central-1 --role-arn arn:aws:iam::685404473957:role/eksMaintainer'
 alias prod-asia='aws --profile prod --region=ap-southeast-1 eks update-kubeconfig --name=solidus-prod-ap-southeast-1 --role-arn arn:aws:iam::685404473957:role/eksMaintainer'
 
+export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
+eval "$(zoxide init zsh)"
+
+# =============================================================================
+# C++ DEVELOPMENT (vcpkg)
+# =============================================================================
+export VCPKG_ROOT="$HOME/vcpkg"
+
+# =============================================================================
+# RUST DEVELOPMENT
+# =============================================================================
+# Run the full CI pipeline locally before pushing
+ci() {
+  set -e
+  echo "=== fmt ===" && cargo fmt --check
+  echo "=== check ===" && cargo check --all-targets
+  echo "=== clippy ===" && cargo clippy --all-targets -- -W clippy::pedantic -W clippy::nursery
+  echo "=== test ===" && cargo test
+  echo "=== doc ===" && RUSTDOCFLAGS="-Dwarnings" cargo doc --no-deps
+  echo "=== all green ==="
+  set +e
+}
