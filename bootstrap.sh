@@ -43,7 +43,7 @@ info "Ensuring system packages are installed..."
 sudo apt-get update -qq
 sudo apt-get install -y -qq \
     zsh git curl wget stow tmux \
-    fzf fd-find bat ripgrep zoxide \
+    fd-find bat ripgrep zoxide \
     python3 pipx \
     build-essential cmake \
     unzip fontconfig \
@@ -65,7 +65,97 @@ fi
 ok "System packages"
 
 # ---------------------------------------------------------------------------
-# 2. GitHub CLI
+# 1b. fzf (from git — apt version is too old for oh-my-zsh fzf plugin)
+# ---------------------------------------------------------------------------
+if [[ ! -d "$HOME/.fzf" ]]; then
+    info "Installing fzf from git..."
+    git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+    "$HOME/.fzf/install" --bin --no-bash --no-fish --no-update-rc
+    ok "fzf installed: $("$HOME/.fzf/bin/fzf" --version)"
+elif [[ -d "$HOME/.fzf/.git" ]]; then
+    info "Updating fzf..."
+    git -C "$HOME/.fzf" pull --ff-only 2>/dev/null && "$HOME/.fzf/install" --bin --no-bash --no-fish --no-update-rc 2>/dev/null || true
+    ok "fzf: $("$HOME/.fzf/bin/fzf" --version)"
+fi
+export PATH="$HOME/.fzf/bin:$PATH"
+
+# Ensure pipx path is available for tool installs below
+pipx ensurepath 2>/dev/null || true
+export PATH="$HOME/.local/bin:$PATH"
+
+# ---------------------------------------------------------------------------
+# 2. C++ development toolchain
+# ---------------------------------------------------------------------------
+info "Ensuring C++ toolchain is installed..."
+
+# LLVM/Clang 19 APT repo
+if ! command -v clang-19 &>/dev/null; then
+    info "Adding LLVM 19 APT repository..."
+    wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc > /dev/null
+    CODENAME=$(lsb_release -cs)
+    echo "deb http://apt.llvm.org/$CODENAME/ llvm-toolchain-$CODENAME-19 main" \
+        | sudo tee /etc/apt/sources.list.d/llvm-19.list > /dev/null
+    sudo apt-get update -qq
+fi
+
+sudo apt-get install -y -qq \
+    g++-14 libstdc++-14-dev \
+    clang-19 clang-format-19 clang-tidy-19 llvm-19 \
+    ninja-build pkg-config \
+    autoconf automake autoconf-archive libtool \
+    linux-libc-dev lcov \
+    libboost-all-dev libzmq3-dev libcurl4-openssl-dev libssl-dev
+
+# Symlink clang-19 as default if no unversioned clang exists
+if command -v clang-19 &>/dev/null && ! command -v clang &>/dev/null; then
+    sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
+    sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
+    sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-19 100
+    sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-19 100
+fi
+
+ok "C++ toolchain"
+
+# vcpkg
+export VCPKG_ROOT="$HOME/vcpkg"
+if [[ ! -d "$VCPKG_ROOT" ]]; then
+    info "Installing vcpkg..."
+    git clone https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT"
+    "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
+    ok "vcpkg installed"
+elif [[ -d "$VCPKG_ROOT/.git" ]]; then
+    info "Updating vcpkg..."
+    git -C "$VCPKG_ROOT" pull --ff-only 2>/dev/null && "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics 2>/dev/null || true
+    ok "vcpkg: up to date"
+fi
+export PATH="$VCPKG_ROOT:$PATH"
+
+# pre-commit (for C++ projects that use it)
+if ! command -v pre-commit &>/dev/null; then
+    info "Installing pre-commit via pipx..."
+    pipx install pre-commit 2>/dev/null \
+        || warn "pre-commit install failed (non-fatal)"
+else
+    ok "pre-commit: $(pre-commit --version)"
+fi
+
+# cmake-format (part of cmakelang package) and mdformat (used by pre-commit hooks)
+if ! command -v cmake-format &>/dev/null; then
+    info "Installing cmakelang (cmake-format) via pipx..."
+    pipx install cmakelang 2>/dev/null || warn "cmakelang install failed (non-fatal)"
+else
+    ok "cmake-format already installed"
+fi
+
+if ! command -v mdformat &>/dev/null; then
+    info "Installing mdformat via pipx..."
+    pipx install mdformat 2>/dev/null || warn "mdformat install failed (non-fatal)"
+else
+    ok "mdformat already installed"
+fi
+
+# ---------------------------------------------------------------------------
+# 3. GitHub CLI
 # ---------------------------------------------------------------------------
 if ! command -v gh &>/dev/null; then
     info "Installing GitHub CLI..."
@@ -102,7 +192,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 4. Rust (via rustup)
+# 4. Rust toolchain (via rustup — official installer)
 # ---------------------------------------------------------------------------
 if ! command -v rustup &>/dev/null; then
     info "Installing Rust via rustup..."
@@ -111,8 +201,31 @@ if ! command -v rustup &>/dev/null; then
     source "$HOME/.cargo/env"
     ok "Rust installed: $(rustc --version)"
 else
+    # Ensure toolchain is up to date
+    rustup update stable --no-self-update 2>/dev/null || true
     ok "Rust: $(rustc --version)"
 fi
+
+# Ensure standard components are installed
+rustup component add clippy rustfmt llvm-tools-preview 2>/dev/null || true
+
+# Cargo dev tools (used by tusk and rop CI pipelines)
+CARGO_TOOLS=(
+    "cargo-llvm-cov"    # code coverage
+    "cargo-audit"       # security vulnerability audit
+    "cargo-deny"        # dependency license/source linting
+)
+
+for tool in "${CARGO_TOOLS[@]}"; do
+    bin_name="${tool}"
+    if ! cargo install --list 2>/dev/null | grep -q "^${tool} "; then
+        info "Installing ${tool}..."
+        cargo install "${tool}" --quiet 2>/dev/null \
+            || warn "${tool} install failed (non-fatal)"
+    else
+        ok "cargo tool: ${tool}"
+    fi
+done
 
 # ---------------------------------------------------------------------------
 # 5. NVM + Node.js
@@ -134,9 +247,6 @@ fi
 # ---------------------------------------------------------------------------
 # 6. pipx + thefuck
 # ---------------------------------------------------------------------------
-pipx ensurepath 2>/dev/null || true
-export PATH="$HOME/.local/bin:$PATH"
-
 if ! command -v thefuck &>/dev/null; then
     info "Installing thefuck via pipx..."
     pipx install thefuck 2>/dev/null \
@@ -229,15 +339,17 @@ if [[ "$BACKUP_NEEDED" == true ]]; then
 fi
 
 # Stow top-level dotfiles (--restow is idempotent — re-links if already stowed)
+# Use -d with absolute path to avoid stow bug with absolute symlinks in $HOME
 info "Stowing dotfiles..."
-cd "$DOTFILES_DIR"
 stow --restow \
+    -d "$(dirname "$DOTFILES_DIR")" \
+    -t "$HOME" \
     --ignore='\.config' \
     --ignore='\.local' \
     --ignore='\.git' \
     --ignore='bootstrap\.sh' \
     --ignore='README.*' \
-    -t "$HOME" .
+    "$(basename "$DOTFILES_DIR")"
 
 # Symlink .config items individually (ln -sfn is idempotent)
 for item in "${CONFIG_ITEMS[@]}"; do
@@ -308,6 +420,20 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# 15. Neovim plugin sync (headless)
+# ---------------------------------------------------------------------------
+if command -v nvim &>/dev/null; then
+    info "Syncing Neovim plugins (lazy.nvim)..."
+    nvim --headless "+Lazy! sync" +qa 2>/dev/null && ok "Neovim plugins synced" \
+        || warn "Neovim plugin sync failed (open nvim manually to complete setup)"
+
+    info "Updating Mason tool registry..."
+    nvim --headless -c "lua require('mason-registry').refresh()" -c "sleep 5" -c "qa" 2>/dev/null \
+        && ok "Mason registry updated" \
+        || warn "Mason update failed (open nvim manually, tools install on first use)"
+fi
+
+# ---------------------------------------------------------------------------
 # Done
 # ---------------------------------------------------------------------------
 echo
@@ -320,5 +446,5 @@ info "  3. Run 'gh auth login' to authenticate GitHub CLI"
 if [[ "$BACKUP_NEEDED" == true ]]; then
     info "  4. Old dotfiles backed up to: $BACKUP_DIR"
 fi
-info "  Optional: install vcpkg, Go, Java, SDKMAN as needed"
+info "  Optional: install Go, Java, SDKMAN as needed"
 echo
