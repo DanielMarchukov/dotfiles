@@ -379,6 +379,46 @@ patch_home "$DOTFILES_DIR/.zshenv"
 patch_home "$DOTFILES_DIR/.zprofile"
 
 # ---------------------------------------------------------------------------
+# 11b. Taskwarrior 3.x (built from source — apt only ships 2.x)
+# ---------------------------------------------------------------------------
+TW_MIN_VERSION="3"
+install_taskwarrior=false
+
+if ! command -v task &>/dev/null; then
+    install_taskwarrior=true
+elif [[ "$(task --version 2>/dev/null | cut -d. -f1)" -lt "$TW_MIN_VERSION" ]]; then
+    info "Taskwarrior $(task --version) found but < 3.x, upgrading..."
+    install_taskwarrior=true
+fi
+
+if [[ "$install_taskwarrior" == true ]]; then
+    info "Building Taskwarrior 3.x from source..."
+    TW_VERSION=$(curl -fsSL https://api.github.com/repos/GothenburgBitFactory/taskwarrior/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+    TW_BUILD_DIR=$(mktemp -d)
+    curl -fsSL -o "$TW_BUILD_DIR/task.tar.gz" \
+        "https://github.com/GothenburgBitFactory/taskwarrior/releases/download/v${TW_VERSION}/task-${TW_VERSION}.tar.gz"
+    tar xzf "$TW_BUILD_DIR/task.tar.gz" -C "$TW_BUILD_DIR"
+    cmake -S "$TW_BUILD_DIR/task-${TW_VERSION}" -B "$TW_BUILD_DIR/build" \
+        -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local 2>/dev/null
+    cmake --build "$TW_BUILD_DIR/build" -j"$(nproc)" 2>/dev/null
+    sudo cmake --install "$TW_BUILD_DIR/build" 2>/dev/null
+    rm -rf "$TW_BUILD_DIR"
+    ok "Taskwarrior ${TW_VERSION} installed"
+else
+    ok "Taskwarrior: $(task --version)"
+fi
+
+# Symlink .taskrc from dotfiles
+if [[ -f "$DOTFILES_DIR/.taskrc" ]]; then
+    backup_if_real "$HOME/.taskrc"
+    ln -sf "$DOTFILES_DIR/.taskrc" "$HOME/.taskrc"
+    ok "Linked ~/.taskrc"
+fi
+
+# Patch hardcoded home path in .taskrc
+patch_home "$DOTFILES_DIR/.taskrc"
+
+# ---------------------------------------------------------------------------
 # 12. Install tmux plugins via TPM
 # ---------------------------------------------------------------------------
 TPM_INSTALL="$HOME/.tmux/plugins/tpm/bin/install_plugins"
