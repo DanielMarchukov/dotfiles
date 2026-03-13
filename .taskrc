@@ -1,0 +1,52 @@
+# [Created by task 3.4.2 2/18/2026 22:37:58]
+data.location=/home/danmarchukov/.task
+news.version=3.4.2
+
+# To use the default location of the XDG directories,
+# move this configuration file from ~/.taskrc to ~/.config/task/taskrc and update location config as follows:
+
+#data.location=~/.local/share/task
+#hooks.location=~/.config/task/hooks
+
+# Color theme (uncomment one to use)
+#include light-16.theme
+#include light-256.theme
+#include bubblegum-256.theme
+#include dark-16.theme
+#include dark-256.theme
+#include dark-red-256.theme
+#include dark-green-256.theme
+#include dark-blue-256.theme
+#include dark-violets-256.theme
+#include dark-yellow-green.theme
+#include dark-gray-256.theme
+#include dark-gray-blue-256.theme
+#include solarized-dark-256.theme
+#include solarized-light-256.theme
+#include no-color.theme
+
+uda.estimate.type=string
+uda.estimate.label=Estimate
+uda.estimate.values=XS,S,M,L,XL
+
+# Track-based ordering (1=first, 8=last)
+uda.track.type=string
+uda.track.label=Track
+uda.track.values=1,2,3,4,5,6,7,8
+
+# Gap of 10 between tracks — max within-track urgency spread
+# is ~9.3, so gap > 9.3 guarantees strict track ordering
+urgency.uda.track.1.coefficient=70
+urgency.uda.track.2.coefficient=60
+urgency.uda.track.3.coefficient=50
+urgency.uda.track.4.coefficient=40
+urgency.uda.track.5.coefficient=30
+urgency.uda.track.6.coefficient=20
+urgency.uda.track.7.coefficient=10
+urgency.uda.track.8.coefficient=0
+
+# Reduce blocking bonus (was 8) so it doesn't override tracks
+urgency.blocking.coefficient=2
+
+# Increase blocked penalty (was -5) so blocked < ready always
+urgency.blocked.coefficient=-10
