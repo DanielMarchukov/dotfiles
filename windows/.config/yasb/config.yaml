@@ -1,0 +1,274 @@
+watch_stylesheet: true
+watch_config: true
+debug: false
+
+bars:
+  primary-bar:
+    enabled: true
+    screens: ["*"]
+    class_name: "yasb-bar"
+    alignment:
+      position: "top"
+      center: false
+    blur_effect:
+      enabled: true
+      acrylic: false
+      dark_mode: true
+      round_corners: false
+      border_color: None
+    window_flags:
+      always_on_top: false
+      windows_app_bar: true
+    dimensions:
+      width: "100%"
+      height: 36
+    padding:
+      top: 0
+      left: 0
+      bottom: 0
+      right: 0
+    widgets:
+      left: ["home", "glazewm_workspaces", "media"]
+      center: ["clock"]
+      right: ["taskbar", "wifi", "open_meteo", "volume", "battery", "power_menu"]
+
+widgets:
+  home:
+    type: "yasb.home.HomeWidget"
+    options:
+      label: "<span>\ue62a</span>"
+      menu_list:
+        - { title: "User Home", path: "~" }
+        - { title: "Download", path: "C:\\Users\\dmarciukovas\\Downloads" }
+        - { title: "Documents", path: "C:\\Users\\dmarciukovas\\Documents" }
+        - { title: "Pictures", path: "C:\\Users\\dmarciukovas\\Pictures" }
+      system_menu: true
+      power_menu: true
+      blur: true
+      round_corners: true
+      round_corners_type: "normal"
+      border_color: "#585b70"
+      distance: 6
+      container_padding:
+        top: 0
+        left: 0
+        bottom: 0
+        right: 0
+      alignment: "left"
+      direction: "down"
+      menu_labels:
+        shutdown: "Shutdown"
+        restart: "Restart"
+        logout: "Logout"
+        lock: "Lock"
+        sleep: "Sleep"
+        system: "System Settings"
+        about: "About This PC"
+        task_manager: "Task Manager"
+
+  glazewm_workspaces:
+    type: "glazewm.workspaces.GlazewmWorkspacesWidget"
+    options:
+      offline_label: "GlazeWM Offline"
+      hide_empty_workspaces: true
+      hide_if_offline: false
+
+  media:
+    type: "yasb.media.MediaWidget"
+    options:
+      label: "<span>\udb80\udf87</span> {title}"
+      label_alt: "<span>\udb80\udf87</span> {title} - {artist}"
+      hide_empty: true
+      callbacks:
+        on_left: "toggle_media_menu"
+        on_middle: "do_nothing"
+        on_right: "toggle_label"
+      max_field_size:
+        label: 40
+        label_alt: 60
+      show_thumbnail: false
+      controls_only: false
+      controls_left: false
+      thumbnail_alpha: 80
+      thumbnail_padding: 8
+      thumbnail_corner_radius: 16
+      icons:
+        prev_track: "\udb81\udcae"
+        next_track: "\udb81\udcad"
+        play: "\udb81\udc0a"
+        pause: "\udb80\udfe4"
+      media_menu:
+        blur: true
+        round_corners: true
+        round_corners_type: "normal"
+        border_color: "#585b70"
+        alignment: "right"
+        direction: "down"
+        offset_top: 6
+        offset_left: 10
+        thumbnail_corner_radius: 8
+        thumbnail_size: 120
+        max_title_size: 80
+        max_artist_size: 20
+        show_source: true
+      media_menu_icons:
+        play: "\ue768"
+        pause: "\ue769"
+        prev_track: "\ue892"
+        next_track: "\ue893"
+      label_shadow:
+        enabled: true
+        color: "black"
+        radius: 3
+        offset: [1, 1]
+
+  clock:
+    type: "yasb.clock.ClockWidget"
+    options:
+      label: "<span>\uf017</span> {%B %#d, %A, %H:%M:%S }"
+      label_alt: "{%A, %d %B %Y %H:%M:%S}"
+      timezones: []
+      calendar:
+        blur: true
+        round_corners: true
+        round_corners_type: "normal"
+        border_color: "#585b70"
+        alignment: "center"
+        direction: "down"
+        distance: 6
+      callbacks:
+        on_left: "toggle_calendar"
+        on_right: "toggle_label"
+
+  taskbar:
+    type: "yasb.taskbar.TaskbarWidget"
+    options:
+      animation:
+        enabled: true
+      icon_size: 13
+      monitor_exclusive: true
+      ignore_apps:
+        processes: []
+        titles: []
+        classes: []
+      container_padding:
+        top: 0
+        left: 3
+        bottom: 2
+        right: 3
+
+  wifi:
+    type: "yasb.wifi.WifiWidget"
+    options:
+      label: '<span style="font-size: 25px;"> {wifi_icon} </span> {wifi_name}'
+      label_alt: "{wifi_name} {wifi_strength}%"
+      update_interval: 5000
+      callbacks:
+        on_left: "exec explorer ms-availablenetworks:"
+        on_middle: "do_nothing"
+        on_right: "toggle_label"
+      wifi_icons:
+        ["\udb82\udd2e", "\udb82\udd1f", "\udb82\udd22", "\udb82\udd25", "\udb82\udd28"]
+
+  open_meteo:
+    type: "yasb.open_meteo.OpenMeteoWidget"
+    options:
+      label: '<span style="font-size: 25px;">{icon}</span> {temp}'
+      label_alt: "{location}: Min {min_temp}, Max {max_temp}"
+      tooltip: true
+      update_interval: 3600
+      hide_decimal: true
+      units: "metric"
+      callbacks:
+        on_left: "toggle_card"
+        on_middle: "do_nothing"
+        on_right: "toggle_label"
+      icons:
+        sunnyDay: "\ue30d"
+        clearNight: "\ue32b"
+        cloudyDay: "\ue312"
+        cloudyNight: "\ue311"
+        drizzleDay: "\udb81\ude7e"
+        drizzleNight: "\udb81\ude7e"
+        rainyDay: "\ue308"
+        rainyNight: "\ue333"
+        snowyDay: "\ue30a"
+        snowyNight: "\ue335"
+        foggyDay: "\ue303"
+        foggyNight: "\ue346"
+        thunderstormDay: "\ue30f"
+        thunderstormNight: "\ue338"
+        default: "\uebaa"
+      weather_card:
+        blur: true
+        round_corners: true
+        round_corners_type: "normal"
+        border_color: "#585b70"
+        alignment: "right"
+        direction: "down"
+        icon_size: 48
+        show_hourly_forecast: true
+        time_format: "24h"
+        hourly_point_spacing: 84
+        hourly_icon_size: 16
+        icon_smoothing: true
+        temp_line_width: 2
+        current_line_color: "#8EAEE8"
+        current_line_width: 1
+        current_line_style: "dot"
+      label_shadow:
+        enabled: true
+        color: "black"
+        radius: 3
+        offset: [1, 1]
+
+  volume:
+    type: "yasb.volume.VolumeWidget"
+    options:
+      label: '<span style="font-size: 25px;">{icon}</span> {level}'
+      label_alt: "{volume}"
+      audio_menu:
+        blur: true
+        round_corners: true
+        round_corners_type: "normal"
+        border_color: "#585b70"
+        alignment: "right"
+        direction: "down"
+        offset_top: 6
+        offset_left: 0
+        show_apps: false
+      volume_icons:
+        - "\ueee8 "
+        - "\uf026 "
+        - "\uf026 "
+        - "\uf027 "
+        - "\uf028 "
+      callbacks:
+        on_left: "toggle_volume_menu"
+        on_middle: "toggle_mute"
+        on_right: "exec cmd.exe /c start ms-settings:sound"
+
+  battery:
+    type: "yasb.battery.BatteryWidget"
+    options:
+      label: '<span style="font-size: 25px;">{icon}</span> {percent}%'
+      label_alt: " time: {time_remaining}"
+      charging_options:
+        icon_format: "{charging_icon}"
+
+  power_menu:
+    type: "yasb.power_menu.PowerMenuWidget"
+    options:
+      label: "\uf011"
+      uptime: true
+      blur: false
+      blur_background: true
+      animation_duration: 200
+      button_row: 5
+      buttons:
+        shutdown: ["\uf011", "Shut Down"]
+        restart: ["\uead2", "Restart"]
+        signout: ["\udb80\udf43", "Sign out"]
+        hibernate: ["\uf28e", "Hibernate"]
+        sleep: ["\u23fe", "Sleep"]
+        cancel: ["", "Cancel"]

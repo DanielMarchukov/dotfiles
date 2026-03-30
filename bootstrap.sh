@@ -16,9 +16,13 @@ warn()  { printf '\033[0;33m[WARN]\033[0m  %s\n' "$*"; }
 err()   { printf '\033[0;31m[ ERR]\033[0m  %s\n' "$*" >&2; }
 
 DOTFILES_REPO="https://github.com/DanielMarchukov/dotfiles.git"
-DOTFILES_DIR="$HOME/Documents/projects/dotfiles"
+DOTFILES_DIR="$HOME/repos/dotfiles"
 BACKUP_DIR="$HOME/.dotfiles-backup/$(date +%Y%m%d-%H%M%S)"
 BACKUP_NEEDED=false
+TEMURIN_JAVA_HOME="/usr/lib/jvm/temurin-21-jdk-amd64"
+GRADLE_VERSION="${GRADLE_VERSION:-8.11.1}"
+INSTALLCERT_SOURCE="${INSTALLCERT_SOURCE:-/mnt/c/Users/$USER/Downloads/InstallCert.java}"
+INSTALLCERT_HOST="${INSTALLCERT_HOST:-www.gradle.org}"
 
 backup_if_real() {
     # Back up a file/dir only if it exists and is NOT already a symlink
@@ -36,6 +40,55 @@ backup_if_real() {
     fi
 }
 
+palantir_java_format_is_healthy() {
+    command -v palantir-java-format &>/dev/null \
+        && palantir-java-format --version >/dev/null 2>&1
+}
+
+palantir_java_format_native_suffix() {
+    case "$(uname -s):$(uname -m)" in
+        Linux:x86_64|Linux:amd64)
+            printf '%s' 'nativeImage-linux-glibc_x86-64.bin'
+            ;;
+        Linux:aarch64|Linux:arm64)
+            printf '%s' 'nativeImage-linux-glibc_aarch64.bin'
+            ;;
+        Darwin:aarch64|Darwin:arm64)
+            printf '%s' 'nativeImage-macos_aarch64.bin'
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+install_palantir_java_format() {
+    local version native_suffix launcher_path version_output
+
+    launcher_path="$HOME/.local/bin/palantir-java-format"
+    mkdir -p "$HOME/.local/bin"
+
+    native_suffix="$(palantir_java_format_native_suffix)" || {
+        err "Unsupported palantir-java-format-native platform: $(uname -s) $(uname -m)"
+        return 1
+    }
+
+    version=$(curl -fsSL 'https://repo1.maven.org/maven2/com/palantir/javaformat/palantir-java-format-native/maven-metadata.xml' \
+        | awk -F'[<>]' '/<release>/{print $3; exit}')
+
+    curl -fsSL -o "$launcher_path" \
+        "https://repo1.maven.org/maven2/com/palantir/javaformat/palantir-java-format-native/${version}/palantir-java-format-native-${version}-${native_suffix}"
+    chmod +x "$launcher_path"
+
+    if ! "$launcher_path" --version >/dev/null 2>&1; then
+        err "Installed palantir-java-format-native binary is not executable"
+        return 1
+    fi
+
+    version_output=$("$launcher_path" --version 2>&1 | head -1)
+    ok "palantir-java-format: ${version_output:-$version}"
+}
+
 # ---------------------------------------------------------------------------
 # 1. System packages (apt-get install is already idempotent)
 # ---------------------------------------------------------------------------
@@ -48,7 +101,8 @@ sudo apt-get install -y -qq \
     build-essential cmake \
     unzip fontconfig \
     sqlite3 \
-    jq
+    jq \
+    uuid-dev libgnutls28-dev
 
 # fd is packaged as 'fdfind' on Ubuntu — create symlink if needed
 if command -v fdfind &>/dev/null && ! command -v fd &>/dev/null; then
@@ -65,7 +119,87 @@ fi
 ok "System packages"
 
 # ---------------------------------------------------------------------------
-# 1b. fzf (from git — apt version is too old for oh-my-zsh fzf plugin)
+# 1b. Temurin JDK 21
+# ---------------------------------------------------------------------------
+info "Ensuring Temurin JDK 21 is installed..."
+if ! dpkg-query -W -f='${Status}' temurin-21-jdk 2>/dev/null | grep -q "install ok installed"; then
+    info "Adding Adoptium APT repository..."
+    sudo mkdir -p /etc/apt/keyrings
+    if [[ ! -f /etc/apt/keyrings/adoptium.gpg ]]; then
+        wget -qO- https://packages.adoptium.net/artifactory/api/gpg/key/public \
+            | sudo gpg --dearmor -o /etc/apt/keyrings/adoptium.gpg
+    fi
+    if [[ ! -f /etc/apt/sources.list.d/adoptium.list ]]; then
+        echo "deb [signed-by=/etc/apt/keyrings/adoptium.gpg] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME=/{print $2}' /etc/os-release) main" \
+            | sudo tee /etc/apt/sources.list.d/adoptium.list > /dev/null
+    fi
+    sudo apt-get update -qq
+fi
+sudo apt-get install -y -qq temurin-21-jdk
+ok "Temurin: $(/usr/lib/jvm/temurin-21-jdk-amd64/bin/java -version 2>&1 | head -1)"
+
+# ---------------------------------------------------------------------------
+# 1c. Optional corporate certificate import for Gradle/Java
+# ---------------------------------------------------------------------------
+info "Checking for optional InstallCert.java bootstrap..."
+if [[ ! -f "$INSTALLCERT_SOURCE" ]]; then
+    warn "InstallCert.java not found at $INSTALLCERT_SOURCE; skipping Java keystore certificate import"
+elif [[ ! -x "$TEMURIN_JAVA_HOME/bin/java" || ! -x "$TEMURIN_JAVA_HOME/bin/javac" ]]; then
+    warn "Temurin JDK tools not available under $TEMURIN_JAVA_HOME; skipping Java keystore certificate import"
+else
+    info "InstallCert.java found at $INSTALLCERT_SOURCE; attempting Java keystore certificate import for $INSTALLCERT_HOST"
+    INSTALLCERT_TMP_DIR=$(mktemp -d)
+    cp "$INSTALLCERT_SOURCE" "$INSTALLCERT_TMP_DIR/InstallCert.java"
+    if (
+        cd "$INSTALLCERT_TMP_DIR"
+        "$TEMURIN_JAVA_HOME/bin/javac" InstallCert.java
+        "$TEMURIN_JAVA_HOME/bin/java" InstallCert --quiet "$INSTALLCERT_HOST"
+    ); then
+        if [[ -f "$INSTALLCERT_TMP_DIR/jssecacerts" ]]; then
+            info "InstallCert generated jssecacerts; updating Temurin trust store"
+            if [[ ! -f "$TEMURIN_JAVA_HOME/lib/security/cacerts-bak" ]]; then
+                sudo cp "$TEMURIN_JAVA_HOME/lib/security/cacerts" "$TEMURIN_JAVA_HOME/lib/security/cacerts-bak"
+                ok "Backed up existing cacerts to $TEMURIN_JAVA_HOME/lib/security/cacerts-bak"
+            else
+                info "Existing cacerts backup found at $TEMURIN_JAVA_HOME/lib/security/cacerts-bak"
+            fi
+            sudo cp "$INSTALLCERT_TMP_DIR/jssecacerts" "$TEMURIN_JAVA_HOME/lib/security/cacerts"
+            ok "Updated Temurin cacerts using InstallCert output"
+        else
+            warn "InstallCert completed but did not produce jssecacerts; skipping keystore replacement"
+        fi
+    else
+        warn "InstallCert execution failed; skipping Java keystore certificate import"
+    fi
+    rm -rf "$INSTALLCERT_TMP_DIR"
+fi
+
+# ---------------------------------------------------------------------------
+# 1d. Go
+# ---------------------------------------------------------------------------
+if ! command -v go &>/dev/null; then
+    info "Installing Go..."
+    GO_VERSION=$(curl -fsSL https://go.dev/dl/?mode=json | jq -r '.[0].version')
+    GO_TARBALL="${GO_VERSION}.linux-amd64.tar.gz"
+    curl -fsSL -o "/tmp/${GO_TARBALL}" "https://go.dev/dl/${GO_TARBALL}"
+    sudo rm -rf /usr/local/go
+    sudo tar -C /usr/local -xzf "/tmp/${GO_TARBALL}"
+    rm -f "/tmp/${GO_TARBALL}"
+    ok "Go: $(/usr/local/go/bin/go version)"
+else
+    ok "Go: $(go version)"
+fi
+
+if ! command -v gopls &>/dev/null; then
+    info "Installing gopls..."
+    /usr/local/go/bin/go install golang.org/x/tools/gopls@latest
+    ok "gopls installed"
+else
+    ok "gopls: $(gopls version | head -1)"
+fi
+
+# ---------------------------------------------------------------------------
+# 1e. fzf (from git — apt version is too old for oh-my-zsh fzf plugin)
 # ---------------------------------------------------------------------------
 if [[ ! -d "$HOME/.fzf" ]]; then
     info "Installing fzf from git..."
@@ -192,7 +326,37 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 4. Rust toolchain (via rustup — official installer)
+# 4. Gradle
+# ---------------------------------------------------------------------------
+if ! command -v gradle &>/dev/null || [[ "$(gradle --version 2>/dev/null | awk '/^Gradle /{print $2; exit}')" != "$GRADLE_VERSION" ]]; then
+    info "Installing Gradle ${GRADLE_VERSION}..."
+    GRADLE_ZIP="/tmp/gradle-${GRADLE_VERSION}-bin.zip"
+    curl -fsSL -o "$GRADLE_ZIP" "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
+    sudo rm -rf "/opt/gradle-${GRADLE_VERSION}"
+    sudo unzip -q -o "$GRADLE_ZIP" -d /opt
+    sudo ln -sf "/opt/gradle-${GRADLE_VERSION}/bin/gradle" /usr/local/bin/gradle
+    rm -f "$GRADLE_ZIP"
+    ok "Gradle: $(gradle --version | awk '/^Gradle /{print $2; exit}')"
+else
+    ok "Gradle: $(gradle --version | awk '/^Gradle /{print $2; exit}')"
+fi
+
+# ---------------------------------------------------------------------------
+# 5. Palantir Java Format
+# ---------------------------------------------------------------------------
+if ! palantir_java_format_is_healthy; then
+    if command -v palantir-java-format &>/dev/null; then
+        warn "Existing palantir-java-format install is unhealthy; reinstalling"
+    else
+        info "Installing palantir-java-format..."
+    fi
+    install_palantir_java_format
+else
+    ok "palantir-java-format: $(palantir-java-format --version 2>&1 | head -1)"
+fi
+
+# ---------------------------------------------------------------------------
+# 6. Rust toolchain (via rustup — official installer)
 # ---------------------------------------------------------------------------
 if ! command -v rustup &>/dev/null; then
     info "Installing Rust via rustup..."
@@ -228,7 +392,7 @@ for tool in "${CARGO_TOOLS[@]}"; do
 done
 
 # ---------------------------------------------------------------------------
-# 5. NVM + Node.js
+# 7. NVM + Node.js
 # ---------------------------------------------------------------------------
 export NVM_DIR="$HOME/.nvm"
 if [[ ! -d "$NVM_DIR" ]]; then
@@ -245,7 +409,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 6. pipx + thefuck
+# 8. pipx + thefuck
 # ---------------------------------------------------------------------------
 if ! command -v thefuck &>/dev/null; then
     info "Installing thefuck via pipx..."
@@ -256,15 +420,18 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 7. Clone dotfiles repo
+# 9. Prepare dotfiles repo
 # ---------------------------------------------------------------------------
-if [[ ! -d "$DOTFILES_DIR/.git" ]]; then
-    info "Cloning dotfiles repo..."
+if [[ -d "$DOTFILES_DIR/.git" ]]; then
+    info "Using local dotfiles repo at $DOTFILES_DIR"
+elif [[ -d "$HOME/repos/.git" ]]; then
+    err "Expected dotfiles repo at $DOTFILES_DIR but found a git repo at $HOME/repos instead"
+    err "Move or clone the dotfiles repo to $DOTFILES_DIR and re-run bootstrap"
+    exit 1
+else
+    info "Cloning dotfiles repo into $DOTFILES_DIR..."
     mkdir -p "$(dirname "$DOTFILES_DIR")"
     git clone "$DOTFILES_REPO" "$DOTFILES_DIR"
-else
-    info "Dotfiles repo exists, pulling latest..."
-    git -C "$DOTFILES_DIR" pull --ff-only || warn "Pull failed (diverged?), continuing with existing state"
 fi
 
 # Init core submodules — always runs (idempotent, skips already-init'd)
@@ -279,7 +446,7 @@ fi
 ok "Dotfiles repo ready"
 
 # ---------------------------------------------------------------------------
-# 8. Powerlevel10k theme
+# 10. Powerlevel10k theme
 # ---------------------------------------------------------------------------
 P10K_DIR="$DOTFILES_DIR/.oh-my-zsh/custom/themes/powerlevel10k"
 if [[ ! -d "$P10K_DIR" ]]; then
@@ -291,7 +458,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 9. Oh-My-Zsh custom plugins
+# 11. Oh-My-Zsh custom plugins
 # ---------------------------------------------------------------------------
 ZSH_CUSTOM="$DOTFILES_DIR/.oh-my-zsh/custom"
 
@@ -314,7 +481,7 @@ for plugin in "${!PLUGINS[@]}"; do
 done
 
 # ---------------------------------------------------------------------------
-# 10. Back up conflicting dotfiles and stow
+# 12. Back up conflicting dotfiles and stow
 # ---------------------------------------------------------------------------
 # Top-level files stow will manage
 STOW_FILES=(
@@ -347,6 +514,7 @@ stow --restow \
     --ignore='\.config' \
     --ignore='\.local' \
     --ignore='\.git' \
+    --ignore='\.taskrc' \
     --ignore='bootstrap\.sh' \
     --ignore='README.*' \
     "$(basename "$DOTFILES_DIR")"
@@ -362,7 +530,7 @@ done
 ok "Dotfiles stowed"
 
 # ---------------------------------------------------------------------------
-# 11. Fix hardcoded paths — make dotfiles portable
+# 13. Fix hardcoded paths — make dotfiles portable
 # ---------------------------------------------------------------------------
 # Replace hardcoded /home/danmarchukov/ with actual $HOME in files that need it.
 # Uses grep guard so it's a no-op on re-run (already patched = no match).
@@ -379,47 +547,7 @@ patch_home "$DOTFILES_DIR/.zshenv"
 patch_home "$DOTFILES_DIR/.zprofile"
 
 # ---------------------------------------------------------------------------
-# 11b. Taskwarrior 3.x (built from source — apt only ships 2.x)
-# ---------------------------------------------------------------------------
-TW_MIN_VERSION="3"
-install_taskwarrior=false
-
-if ! command -v task &>/dev/null; then
-    install_taskwarrior=true
-elif [[ "$(task --version 2>/dev/null | cut -d. -f1)" -lt "$TW_MIN_VERSION" ]]; then
-    info "Taskwarrior $(task --version) found but < 3.x, upgrading..."
-    install_taskwarrior=true
-fi
-
-if [[ "$install_taskwarrior" == true ]]; then
-    info "Building Taskwarrior 3.x from source..."
-    TW_VERSION=$(curl -fsSL https://api.github.com/repos/GothenburgBitFactory/taskwarrior/releases/latest | jq -r '.tag_name' | sed 's/^v//')
-    TW_BUILD_DIR=$(mktemp -d)
-    curl -fsSL -o "$TW_BUILD_DIR/task.tar.gz" \
-        "https://github.com/GothenburgBitFactory/taskwarrior/releases/download/v${TW_VERSION}/task-${TW_VERSION}.tar.gz"
-    tar xzf "$TW_BUILD_DIR/task.tar.gz" -C "$TW_BUILD_DIR"
-    cmake -S "$TW_BUILD_DIR/task-${TW_VERSION}" -B "$TW_BUILD_DIR/build" \
-        -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local 2>/dev/null
-    cmake --build "$TW_BUILD_DIR/build" -j"$(nproc)" 2>/dev/null
-    sudo cmake --install "$TW_BUILD_DIR/build" 2>/dev/null
-    rm -rf "$TW_BUILD_DIR"
-    ok "Taskwarrior ${TW_VERSION} installed"
-else
-    ok "Taskwarrior: $(task --version)"
-fi
-
-# Symlink .taskrc from dotfiles
-if [[ -f "$DOTFILES_DIR/.taskrc" ]]; then
-    backup_if_real "$HOME/.taskrc"
-    ln -sf "$DOTFILES_DIR/.taskrc" "$HOME/.taskrc"
-    ok "Linked ~/.taskrc"
-fi
-
-# Patch hardcoded home path in .taskrc
-patch_home "$DOTFILES_DIR/.taskrc"
-
-# ---------------------------------------------------------------------------
-# 12. Install tmux plugins via TPM
+# 14. Install tmux plugins via TPM
 # ---------------------------------------------------------------------------
 TPM_INSTALL="$HOME/.tmux/plugins/tpm/bin/install_plugins"
 if [[ -x "$TPM_INSTALL" ]]; then
@@ -431,7 +559,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 13. Set zsh as default shell
+# 15. Set zsh as default shell
 # ---------------------------------------------------------------------------
 if [[ "$SHELL" != *"zsh"* ]]; then
     info "Changing default shell to zsh..."
@@ -441,7 +569,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 14. Install Nerd Font (for Powerlevel10k icons)
+# 16. Install Nerd Font (for Powerlevel10k icons)
 # ---------------------------------------------------------------------------
 FONT_DIR="$HOME/.local/share/fonts"
 if ! fc-list 2>/dev/null | grep -qi "MesloLGS"; then
@@ -460,7 +588,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 15. Neovim plugin sync (headless)
+# 17. Neovim plugin sync (headless)
 # ---------------------------------------------------------------------------
 if command -v nvim &>/dev/null; then
     info "Syncing Neovim plugins (lazy.nvim)..."
@@ -471,7 +599,58 @@ if command -v nvim &>/dev/null; then
     nvim --headless -c "lua require('mason-registry').refresh()" -c "sleep 5" -c "qa" 2>/dev/null \
         && ok "Mason registry updated" \
         || warn "Mason update failed (open nvim manually, tools install on first use)"
+
+    info "Installing Mason Java tooling..."
+    nvim --headless "+MasonInstall jdtls java-debug-adapter java-test" +qa 2>/dev/null \
+        && ok "Mason Java tools installed" \
+        || warn "Mason Java tool install failed (open a Java file in nvim to trigger install)"
 fi
+
+# ---------------------------------------------------------------------------
+# 18. Taskwarrior 3.x (built from source — apt only ships 2.x)
+# ---------------------------------------------------------------------------
+TW_MIN_VERSION="3"
+install_taskwarrior=false
+
+if ! command -v task &>/dev/null; then
+    install_taskwarrior=true
+elif [[ "$(task --version 2>/dev/null | cut -d. -f1)" -lt "$TW_MIN_VERSION" ]]; then
+    info "Taskwarrior $(task --version) found but < 3.x, upgrading..."
+    install_taskwarrior=true
+fi
+
+if [[ "$install_taskwarrior" == true ]]; then
+    info "Building Taskwarrior 3.x from source..."
+    if TW_VERSION=$(curl -fsSL https://api.github.com/repos/GothenburgBitFactory/taskwarrior/releases/latest | jq -r '.tag_name' | sed 's/^v//'); then
+        TW_BUILD_DIR=$(mktemp -d)
+        if curl -fsSL -o "$TW_BUILD_DIR/task.tar.gz" \
+            "https://github.com/GothenburgBitFactory/taskwarrior/releases/download/v${TW_VERSION}/task-${TW_VERSION}.tar.gz" \
+            && tar xzf "$TW_BUILD_DIR/task.tar.gz" -C "$TW_BUILD_DIR" \
+            && cmake -S "$TW_BUILD_DIR/task-${TW_VERSION}" -B "$TW_BUILD_DIR/build" \
+                -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local \
+            && cmake --build "$TW_BUILD_DIR/build" -j"$(nproc)" \
+            && sudo cmake --install "$TW_BUILD_DIR/build"; then
+            ok "Taskwarrior ${TW_VERSION} installed"
+        else
+            warn "Taskwarrior build failed; continuing without Taskwarrior 3.x"
+        fi
+        rm -rf "$TW_BUILD_DIR"
+    else
+        warn "Could not resolve latest Taskwarrior release; continuing without Taskwarrior 3.x"
+    fi
+else
+    ok "Taskwarrior: $(task --version)"
+fi
+
+# Symlink .taskrc from dotfiles
+if [[ -f "$DOTFILES_DIR/.taskrc" ]]; then
+    backup_if_real "$HOME/.taskrc"
+    ln -sf "$DOTFILES_DIR/.taskrc" "$HOME/.taskrc"
+    ok "Linked ~/.taskrc"
+fi
+
+# Patch hardcoded home path in .taskrc
+patch_home "$DOTFILES_DIR/.taskrc"
 
 # ---------------------------------------------------------------------------
 # Done
@@ -486,5 +665,5 @@ info "  3. Run 'gh auth login' to authenticate GitHub CLI"
 if [[ "$BACKUP_NEEDED" == true ]]; then
     info "  4. Old dotfiles backed up to: $BACKUP_DIR"
 fi
-info "  Optional: install Go, Java, SDKMAN as needed"
+info "  Optional: install Go as needed"
 echo
