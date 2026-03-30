@@ -1,0 +1,516 @@
+/* Adapted from ashish0kumar/windots for GlazeWM + YASB only. */
+:root {
+    --rosewater: #f5e0dc;
+    --flamingo: #f2cdcd;
+    --pink: #f5c2e7;
+    --mauve: #cba6f7;
+    --red: #f38ba8;
+    --maroon: #eba0ac;
+    --peach: #fab387;
+    --yellow: #f9e2af;
+    --green: #a6e3a1;
+    --teal: #94e2d5;
+    --sky: #89dceb;
+    --sapphire: #74c7ec;
+    --blue: #89b4fa;
+    --lavender: #b4befe;
+    --text: #cdd6f4;
+    --subtext1: #bac2de;
+    --subtext0: #a6adc8;
+    --overlay2: #9399b2;
+    --overlay1: #7f849c;
+    --overlay0: #6c7086;
+    --surface2: #585b70;
+    --surface1: #45475a;
+    --surface0: #282936;
+    --base: rgb(30, 30, 46);
+    --mantle: rgba(24, 24, 37, 1);
+}
+
+* {
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 600;
+    font-family: "FiraCode Nerd Font Mono", "Segoe MDL2 Assets", sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.yasb-bar {
+    padding: 3px 10px;
+    margin: 0;
+    background-color: var(--base);
+}
+
+.widget {
+    padding: 0 6px;
+    margin: 0;
+}
+
+.icon {
+    font-size: 14px;
+}
+
+.widget .label {
+    padding: 0 10px 0 5px;
+}
+
+.home-widget,
+.glazewm-workspaces,
+.media-widget,
+.clock-widget .widget-container,
+.wifi-widget .widget-container,
+.open-meteo-widget .widget-container,
+.volume-widget,
+.battery-widget .widget-container,
+.power-menu-widget {
+    background-color: #24273a;
+    border-radius: 15px;
+    height: 30px;
+}
+
+.home-widget,
+.wifi-widget .widget-container,
+.open-meteo-widget .widget-container,
+.volume-widget,
+.battery-widget .widget-container,
+.power-menu-widget {
+    background-color: var(--base);
+}
+
+.home-widget {
+    padding: 0 10px;
+    margin: 0 8px 0 0;
+}
+
+.home-widget .icon,
+.clock-widget .widget-container .icon {
+    color: var(--blue);
+}
+
+.home-widget .icon {
+    padding: 0 5px 0 0;
+}
+
+.home-widget .icon:hover {
+    color: var(--text);
+}
+
+.home-menu,
+.calendar,
+.audio-menu {
+    background-color: var(--mantle);
+}
+
+.home-menu .menu-item {
+    padding: 10px 48px 10px 16px;
+    font-size: 14px;
+    font-family: "FiraCode Nerd Font Mono", "Segoe MDL2 Assets", sans-serif;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.home-menu .menu-item:hover {
+    background-color: #24273a;
+    color: #fff;
+}
+
+.home-menu .separator {
+    max-height: 1px;
+    background-color: var(--surface1);
+}
+
+.glazewm-workspaces .ws-btn {
+    background-color: transparent;
+    border: none;
+    outline: none;
+    padding: 0 4px;
+}
+
+.glazewm-workspaces .ws-btn.active_populated {
+    color: var(--mauve);
+    background-color: var(--mauve);
+    min-width: 22px;
+    max-width: 22px;
+    min-height: 12px;
+    max-height: 12px;
+    padding: 0;
+    border-radius: 6px;
+    margin: 0 2px 0 5px;
+    border: none;
+}
+
+.glazewm-workspaces .ws-btn.active_empty {
+    color: var(--mauve);
+    border: none;
+}
+
+.glazewm-workspaces .ws-btn.populated,
+.glazewm-workspaces .ws-btn.empty {
+    color: var(--overlay1);
+    border: none;
+}
+
+.media-widget {
+    margin: 0 0 0 8px;
+}
+
+.media-widget .btn.play,
+.media-widget .btn.prev,
+.media-widget .btn.next {
+    font-size: 20px;
+    color: var(--subtext0);
+    padding: 0 5px;
+}
+
+.media-widget .btn.play:hover,
+.media-widget .btn.prev:hover,
+.media-widget .btn.next:hover {
+    color: var(--text);
+}
+
+.media-menu {
+    min-width: 420px;
+    max-width: 420px;
+    background-color: #181825;
+    border-radius: 8px;
+}
+
+.media-menu .title,
+.media-menu .artist,
+.media-menu .source,
+.calendar .day-label,
+.calendar .month-label,
+.calendar .date-label {
+    font-family: "FiraCode Nerd Font Mono", "Segoe MDL2 Assets", sans-serif;
+}
+
+.media-menu .title,
+.media-menu .artist,
+.media-menu .source {
+    font-size: 14px;
+    font-weight: 600;
+    margin-left: 10px;
+}
+
+.media-menu .artist {
+    font-size: 13px;
+    color: var(--mauve);
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+.media-menu .source {
+    color: var(--base);
+}
+
+.media-menu .btn {
+    font-family: "FiraCode Nerd Font Mono", "Segoe MDL2 Assets", sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    margin: 10px 2px 0;
+    min-width: 40px;
+    max-width: 40px;
+    min-height: 40px;
+    max-height: 40px;
+    border-radius: 20px;
+    color: var(--overlay0);
+}
+
+.media-menu .btn.prev {
+    margin-left: 10px;
+}
+
+.media-menu .btn:hover {
+    color: var(--overlay2);
+}
+
+.media-menu .btn.play {
+    font-size: 24px;
+}
+
+.media-menu .btn.disabled:hover,
+.media-menu .btn.disabled {
+    color: #4e525c;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.media-menu .playback-time {
+    font-size: 13px;
+    color: var(--mauve);
+    margin-top: 20px;
+    min-width: 100px;
+}
+
+.media-menu .progress-slider {
+    height: 10px;
+    margin: 5px 4px;
+    border-radius: 3px;
+}
+
+.media-menu .progress-slider::groove {
+    background: rgba(255, 255, 255, 0.1);
+    height: 2px;
+    border-radius: 3px;
+}
+
+.media-menu .progress-slider::groove:hover {
+    background: rgba(255, 255, 255, 0.2);
+    height: 6px;
+    border-radius: 3px;
+}
+
+.media-menu .progress-slider::sub-page {
+    background: var(--mauve);
+    border-radius: 3px;
+    height: 4px;
+}
+
+.clock-widget .widget-container .icon {
+    margin: 0 4px 0 10px;
+}
+
+.calendar {
+    padding: 10px;
+    border: 1px solid var(--surface0);
+    border-radius: 10px;
+}
+
+.calendar .calendar-table::item {
+    background-color: #24273a;
+    color: var(--overlay1);
+    margin: 0;
+    padding: 0;
+    border: none;
+    outline: none;
+}
+
+.calendar .calendar-table::item:selected {
+    color: var(--text);
+}
+
+.calendar .day-label {
+    margin-top: 20px;
+    font-size: 16px;
+    color: var(--text);
+    font-weight: 700;
+    min-width: 180px;
+    max-width: 180px;
+}
+
+.calendar .month-label {
+    font-size: 16px;
+    color: var(--text);
+    font-weight: 400;
+    min-width: 180px;
+    max-width: 180px;
+}
+
+.calendar .date-label {
+    font-size: 88px;
+    font-weight: 900;
+    color: var(--text);
+    margin-top: -20px;
+    min-width: 180px;
+    max-width: 180px;
+}
+
+.taskbar-widget .app-icon {
+    font-size: 14px;
+    padding: 0;
+    min-width: 20px;
+    min-height: 20px;
+}
+
+.taskbar-widget .app-container {
+    margin: -7px 0 7px 0;
+    padding: 0;
+    min-width: 22px;
+    min-height: 28px;
+}
+
+.wifi-widget .widget-container .icon {
+    font-size: 14px;
+    color: var(--yellow);
+    padding: 0 4px 0 8px;
+}
+
+.wifi-widget .widget-container .label {
+    padding: 0 8px 0 0;
+}
+
+.open-meteo-widget .widget-container {
+    padding: 0 8px;
+}
+
+.open-meteo-widget .icon,
+.volume-widget .icon,
+.battery-widget .widget-container .icon,
+.power-menu-widget .label {
+    font-size: 16px;
+    font-family: "FiraCode Nerd Font Mono", "Segoe MDL2 Assets", sans-serif;
+}
+
+.open-meteo-widget .icon {
+    color: var(--yellow);
+    padding: 0 4px 0 0;
+}
+
+.open-meteo-widget .label {
+    padding: 0 2px 0 0;
+}
+
+.open-meteo-widget .label span,
+.volume-widget .label span {
+    font-size: 25px;
+    line-height: 1;
+    font-family: "FiraCode Nerd Font Mono", "Segoe MDL2 Assets", sans-serif;
+}
+
+.open-meteo-card {
+    background-color: var(--mantle);
+    border: 1px solid var(--surface0);
+    border-radius: 10px;
+    padding: 8px 10px 16px 10px;
+}
+
+.open-meteo-card,
+.open-meteo-card * {
+    font-family: "FiraCode Nerd Font Propo", "Segoe UI", "Segoe MDL2 Assets", sans-serif;
+}
+
+.open-meteo-card .label {
+    font-size: 12px;
+}
+
+.hourly-data-buttons .label,
+.hourly-data-button .label,
+.open-meteo-card-day .label {
+    font-size: 11px;
+}
+
+.hourly-data-buttons {
+    margin: 4px 0 8px 0;
+}
+
+.hourly-container {
+    min-height: 190px;
+    margin-top: 10px;
+}
+
+.hourly-data {
+    min-height: 190px;
+}
+
+.open-meteo-card-today .label.location {
+    color: var(--text);
+}
+
+.open-meteo-card-day {
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.open-meteo-card-day.active {
+    border: 1px solid var(--surface2);
+}
+
+.volume-widget {
+    padding: 0 4px;
+}
+
+.volume-widget .label {
+    padding: 0 4px 0 0;
+}
+
+.volume-widget .icon {
+    color: var(--peach);
+    padding: 0 0 0 4px;
+}
+
+.battery-widget .widget-container .icon.status-low {
+    color: var(--red);
+    padding: 0 4px 0 8px;
+}
+
+.battery-widget .widget-container .icon.status-medium {
+    color: var(--yellow);
+    padding: 0 4px 0 8px;
+}
+
+.battery-widget .widget-container .icon.status-high,
+.battery-widget .widget-container .icon.status-full {
+    color: var(--green);
+    padding: 0 4px 0 8px;
+}
+
+.battery-widget .widget-container .icon.status-charging {
+    color: var(--blue);
+    padding: 0 0 0 8px;
+}
+
+.power-menu-widget .label {
+    color: var(--red);
+    padding: 0 4px 0 0;
+}
+
+.power-menu-popup {
+    background-color: transparent;
+}
+
+.power-menu-popup .button {
+    padding: 0;
+    width: 180px;
+    height: 230px;
+    border-radius: 8px;
+    background-color: var(--base);
+    color: var(--text);
+    border-left: 4px solid rgba(58, 59, 83, 0);
+    border-right: 4px solid rgba(58, 59, 83, 0);
+    border-top: 8px solid rgba(58, 59, 83, 0);
+    border-bottom: 8px solid rgba(58, 59, 83, 0);
+    margin: 0;
+}
+
+.power-menu-popup .button.hover {
+    background-color: var(--surface0);
+    border-left: 4px solid var(--surface0);
+    border-right: 4px solid var(--surface0);
+    border-top: 8px solid var(--surface0);
+    border-bottom: 8px solid var(--surface0);
+}
+
+.power-menu-popup .button .label {
+    margin-bottom: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--subtext1);
+}
+
+.power-menu-popup .button .icon {
+    font-size: 64px;
+    padding-top: 32px;
+    color: var(--subtext1);
+}
+
+.power-menu-popup .button.cancel {
+    height: 32px;
+    border-radius: 4px;
+}
+
+.power-menu-popup .button.cancel .icon {
+    padding: 0;
+    margin: 0;
+}
+
+.power-menu-popup .button.cancel .label {
+    color: var(--red);
+    margin: 0;
+}
+
+.uptime {
+    font-size: 14px;
+    margin-bottom: 10px;
+    color: var(--subtext0);
+}

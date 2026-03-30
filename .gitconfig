@@ -10,3 +10,5 @@
 [credential "https://gist.github.com"]
 	helper =
 	helper = !/usr/bin/gh auth git-credential
+[http]
+	sslCAInfo = /home/dmarciukovas/.aws/combined_cas.pem

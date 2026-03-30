@@ -31,7 +31,7 @@ export GOPATH="${GOPATH:-$HOME/go}"
 if [[ "$PLATFORM" == "mac" ]]; then
   # macOS-specific paths
   export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
-  export PATH=/opt/homebrew/opt/python@3.13/libexec/bin:$HOME/bin:$HOME/.local/bin:/usr/local/bin:$GOPATH/bin:$JAVA_HOME/bin:$PATH
+  export PATH=/opt/homebrew/opt/python@3.13/libexec/bin:$HOME/bin:$HOME/.local/bin:/usr/local/bin:/usr/local/go/bin:$GOPATH/bin:$JAVA_HOME/bin:$PATH
 
   # macOS package manager paths
   if [[ -d "/opt/homebrew/bin" ]]; then
@@ -44,13 +44,13 @@ if [[ "$PLATFORM" == "mac" ]]; then
   fi
 elif [[ "$PLATFORM" == "linux" ]]; then
   # Linux-specific paths
-  export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$GOPATH/bin:$PATH
+  export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:/usr/local/go/bin:$GOPATH/bin:$PATH
 
-  # Common Java paths on Ubuntu
-  if [[ -d "/usr/lib/jvm/java-21-openjdk-amd64" ]]; then
-    export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
-  elif [[ -d "/usr/lib/jvm/temurin-21-jdk-amd64" ]]; then
+  # Prefer Temurin 21 when installed, then fall back to distro OpenJDK 21
+  if [[ -d "/usr/lib/jvm/temurin-21-jdk-amd64" ]]; then
     export JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64
+  elif [[ -d "/usr/lib/jvm/java-21-openjdk-amd64" ]]; then
+    export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
   fi
 
   # Add Java bin to PATH if JAVA_HOME is set
@@ -151,37 +151,12 @@ source $ZSH/oh-my-zsh.sh
 # P10K theme
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-# SDKMAN - Lazy load to improve startup time
-export SDKMAN_DIR="$HOME/.sdkman"
-if [[ -s "$SDKMAN_DIR/bin/sdkman-init.sh" ]]; then
-  # Add SDKMAN candidates to PATH without loading the full init script
-  export PATH="$SDKMAN_DIR/candidates/*/current/bin:$PATH"
-
-  # Lazy load sdkman
-  sdk() {
-    unset -f sdk
-    source "$SDKMAN_DIR/bin/sdkman-init.sh"
-    sdk "$@"
-  }
-fi
-
 # Modern CLI tools - Lazy load to improve startup time
 # Note: zoxide is integrated via oh-my-zsh z plugin, no separate init needed
 
-# thefuck - lazy load wrapper
+# thefuck
 if command -v thefuck >/dev/null 2>&1; then
-  fuck() {
-    TF_PYTHONIOENCODING=$PYTHONIOENCODING
-    export TF_SHELL=zsh
-    export TF_ALIAS=fuck
-    export TF_SHELL_ALIASES=$(alias)
-    export TF_HISTORY=$(fc -ln -10)
-    export PYTHONIOENCODING=utf-8
-    TF_CMD=$(thefuck THEFUCK_ARGUMENT_PLACEHOLDER $@) && eval $TF_CMD
-    unset TF_HISTORY
-    export PYTHONIOENCODING=$TF_PYTHONIOENCODING
-    test -n "$TF_CMD" && print -s $TF_CMD
-  }
+  eval "$(TF_SHELL=zsh thefuck --alias fuck)"
 fi
 
 # gh copilot - lazy load wrapper
@@ -222,12 +197,6 @@ if command -v fzf >/dev/null 2>&1; then
     export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
     export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
   fi
-fi
-
-# Load secrets if available
-if [[ -f "$HOME/.secrets" ]]; then
-  chmod +x "$HOME/.secrets"
-  source "$HOME/.secrets"
 fi
 
 # =============================================================================
@@ -328,6 +297,8 @@ zsh-compile() {
 export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
 eval "$(zoxide init zsh)"
 
+export PATH=$HOME/.nvm/versions/node/v24.14.1/bin:$PATH
+
 # =============================================================================
 # C++ DEVELOPMENT (vcpkg)
 # =============================================================================
@@ -347,3 +318,66 @@ ci() {
   echo "=== all green ==="
   set +e
 }
+
+# Load secrets last so local overrides win
+if [[ -f "$HOME/.secrets" ]]; then
+  chmod +x "$HOME/.secrets"
+  source "$HOME/.secrets"
+fi
+
+# Keep GitHub build credentials out of the default environment so gh/octo use stored gh auth.
+unset GH_USERNAME GH_TOKEN GITHUB_TOKEN
+
+with_github_auth() {
+  if [[ $# -eq 0 ]]; then
+    echo "usage: with_github_auth <command> [args...]" >&2
+    return 1
+  fi
+
+  local secrets_file="$HOME/.secrets"
+  if [[ ! -f "$secrets_file" ]]; then
+    echo "Missing $secrets_file" >&2
+    return 1
+  fi
+
+  (
+    source "$secrets_file"
+    if [[ -z "${GH_USERNAME:-}" || -z "${GH_TOKEN:-}" ]]; then
+      echo "Missing GH_USERNAME or GH_TOKEN in $secrets_file" >&2
+      exit 1
+    fi
+    export GH_USERNAME GH_TOKEN
+    exec "$@"
+  )
+}
+
+# Make TIBRV available to JNI users without moving it ahead of existing libraries.
+if [[ -n "$TIBRV_HOME" && -d "$TIBRV_HOME/lib" ]]; then
+  case ":${LD_LIBRARY_PATH:-}:" in
+    *":$TIBRV_HOME/lib:"*) ;;
+    *) export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}$TIBRV_HOME/lib" ;;
+  esac
+fi
+
+# Load TIBCO Rendezvous libraries only for commands that need them.
+with_tibrv() {
+  if [[ -z "$TIBRV_HOME" ]]; then
+    echo "TIBRV_HOME is not set"
+    return 1
+  fi
+
+  local tibrv_lib="$TIBRV_HOME/lib"
+  local ld_library_path="${LD_LIBRARY_PATH:-}"
+
+  if [[ ! -d "$tibrv_lib" ]]; then
+    echo "TIBRV_HOME/lib does not exist: $tibrv_lib"
+    return 1
+  fi
+
+  case ":$ld_library_path:" in
+    *":$tibrv_lib:"*) env LD_LIBRARY_PATH="$ld_library_path" "$@" ;;
+    *) env LD_LIBRARY_PATH="${ld_library_path:+$ld_library_path:}$tibrv_lib" "$@" ;;
+  esac
+}
+
+alias tibrv='with_tibrv'
