@@ -71,7 +71,14 @@ fi
 # COMMON ENVIRONMENT VARIABLES
 # =============================================================================
 export ZSH="$HOME/.oh-my-zsh"
-export LANG=en_US.UTF-8
+# Respect the system locale instead of forcing one that may not exist.
+if [[ -z "${LANG:-}" ]]; then
+  if [[ "$PLATFORM" == "linux" ]]; then
+    export LANG="C.UTF-8"
+  else
+    export LANG="en_US.UTF-8"
+  fi
+fi
 export GITLAB_USER=danielius.m
 
 # Editor preferences
