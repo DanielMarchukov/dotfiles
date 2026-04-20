@@ -409,14 +409,20 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 8. pipx + thefuck
+# 8. pay-respects (thefuck replacement — thefuck is broken on Python 3.12+)
 # ---------------------------------------------------------------------------
-if ! command -v thefuck &>/dev/null; then
-    info "Installing thefuck via pipx..."
-    pipx install thefuck 2>/dev/null \
-        || warn "thefuck install failed (non-fatal, install manually with: pipx install thefuck)"
+if ! command -v pay-respects &>/dev/null; then
+    info "Installing pay-respects via cargo..."
+    cargo install pay-respects --quiet 2>/dev/null \
+        || warn "pay-respects install failed (non-fatal, install manually with: cargo install pay-respects)"
 else
-    ok "thefuck already installed"
+    ok "pay-respects: $(pay-respects --version 2>&1 | head -1)"
+fi
+
+# Clean up legacy thefuck pipx install if present (distutils/imp removed in Py3.12)
+if command -v pipx &>/dev/null && pipx list --short 2>/dev/null | grep -q '^thefuck '; then
+    info "Removing legacy thefuck pipx install..."
+    pipx uninstall thefuck >/dev/null 2>&1 || true
 fi
 
 # ---------------------------------------------------------------------------

@@ -171,9 +171,9 @@ if command -v atuin >/dev/null 2>&1; then
   eval "$(atuin init zsh --disable-up-arrow)"
 fi
 
-# thefuck
-if command -v thefuck >/dev/null 2>&1; then
-  eval "$(TF_SHELL=zsh thefuck --alias fuck)"
+# pay-respects (thefuck replacement in Rust)
+if command -v pay-respects >/dev/null 2>&1; then
+  eval "$(pay-respects zsh --alias fuck)"
 fi
 
 # gh copilot - lazy load wrapper
