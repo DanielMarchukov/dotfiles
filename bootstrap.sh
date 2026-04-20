@@ -500,6 +500,20 @@ for f in "${STOW_FILES[@]}"; do
     backup_if_real "$HOME/$f"
 done
 
+# Refuse to proceed if ~/.config is a wholesale symlink to the submodule:
+# CONFIG_ITEMS below would resolve through the link and wipe submodule
+# contents via backup_if_real. Per-item symlinks only.
+if [[ -L "$HOME/.config" ]]; then
+    config_target="$(readlink -f "$HOME/.config" 2>/dev/null || true)"
+    if [[ "$config_target" == "$DOTFILES_DIR/.config" ]]; then
+        err "~/.config is a wholesale symlink to $DOTFILES_DIR/.config."
+        err "Migrate to per-item symlinks before re-running:"
+        err "  rm ~/.config && mkdir ~/.config"
+        err "  mv $DOTFILES_DIR/.config/{atuin,gh,github-copilot,glab-cli,go} ~/.config/ 2>/dev/null || true"
+        exit 1
+    fi
+fi
+
 # .config items managed individually (don't replace the whole .config dir)
 mkdir -p "$HOME/.config"
 CONFIG_ITEMS=(nvim tmux git just tealdeer)
