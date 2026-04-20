@@ -161,6 +161,16 @@ source $ZSH/oh-my-zsh.sh
 # Modern CLI tools - Lazy load to improve startup time
 # Note: zoxide is integrated via oh-my-zsh z plugin, no separate init needed
 
+# direnv - repo-local environment loading
+if command -v direnv >/dev/null 2>&1; then
+  eval "$(direnv hook zsh)"
+fi
+
+# atuin - richer history search without replacing the up-arrow flow
+if command -v atuin >/dev/null 2>&1; then
+  eval "$(atuin init zsh --disable-up-arrow)"
+fi
+
 # thefuck
 if command -v thefuck >/dev/null 2>&1; then
   eval "$(TF_SHELL=zsh thefuck --alias fuck)"
@@ -234,6 +244,40 @@ alias tmxf="vim ~/.config/tmux/tmux.conf"
 # Source configs
 alias stmx="tmux source-file ~/.config/tmux/tmux.conf"
 alias szsh="source ~/.zshrc"
+
+# Global Justfile entrypoint for reusable user-level workflows
+gj() {
+  command "$HOME/bin/gj" "$@"
+}
+
+# mosh layered over the existing tssh / wtssh host and SSH flow
+mssh() {
+  command mosh --ssh="tssh" "$@"
+}
+
+wtmosh() {
+  local mode="user"
+  if [[ "${1-}" == "--prophet" ]]; then
+    mode="prophet"
+    shift
+  fi
+
+  local index_file="${HOME}/.ssh/winsshterm_hosts_index.tsv"
+  if [[ ! -f "$index_file" ]]; then
+    echo "Missing $index_file" >&2
+    return 1
+  fi
+
+  local query="${*:-}"
+  local selected alias_name
+  selected=$(
+    awk -F '\t' -v mode="$mode" 'NR == 1 { next } $3 == mode { print $0 }' "$index_file" |
+      fzf --delimiter='\t' --with-nth=1,2,4 --query="$query" --prompt="mosh:${mode}> " --height=80% --layout=reverse --border
+  ) || return 0
+
+  alias_name=$(printf '%s\n' "$selected" | cut -f1)
+  mssh "$alias_name"
+}
 
 # Neovim variants
 alias cvim="NVIM_APPNAME=NvChad nvim"

@@ -496,7 +496,7 @@ done
 
 # .config items managed individually (don't replace the whole .config dir)
 mkdir -p "$HOME/.config"
-CONFIG_ITEMS=(nvim tmux git)
+CONFIG_ITEMS=(nvim tmux git just tealdeer)
 for item in "${CONFIG_ITEMS[@]}"; do
     backup_if_real "$HOME/.config/$item"
 done
@@ -528,6 +528,18 @@ for item in "${CONFIG_ITEMS[@]}"; do
 done
 
 ok "Dotfiles stowed"
+
+# ---------------------------------------------------------------------------
+# 12b. Shell workflow extensions
+# ---------------------------------------------------------------------------
+if [[ "${SKIP_CLI_EXTENSIONS:-0}" == "1" ]]; then
+    warn "Skipping install-cli-extensions.sh because SKIP_CLI_EXTENSIONS=1"
+elif [[ -x "$DOTFILES_DIR/install-cli-extensions.sh" ]]; then
+    info "Installing shell CLI extensions..."
+    "$DOTFILES_DIR/install-cli-extensions.sh"
+else
+    warn "install-cli-extensions.sh not found or not executable; skipping shell CLI extensions"
+fi
 
 # ---------------------------------------------------------------------------
 # 13. Fix hardcoded paths — make dotfiles portable

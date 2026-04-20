@@ -71,3 +71,27 @@ For Linux/WSL bootstrap, use:
 ```bash
 ./bootstrap.sh
 ```
+
+Bootstrap now also runs the shell-workflow extension installer by default. To skip that step on a constrained network, use:
+
+```bash
+SKIP_CLI_EXTENSIONS=1 ./bootstrap.sh
+```
+
+You can also rerun the extension installer directly:
+
+```bash
+./install-cli-extensions.sh
+```
+
+That installer adds `direnv`, `atuin`, `delta`, `git-absorb`, `git-branchless`, `glab`, `just`, `hyperfine`, `timewarrior`, `yq`, `watchexec`, `tealdeer`/`tldr`, `rga`, and `mosh`.
+
+`tldr` is installed from upstream tealdeer releases and configured to update from GitHub release assets instead of the old `tldr.sh/assets` path.
+
+The dotfiles also ship a reusable global `just` config at `~/.config/just/justfile`. Use it with:
+
+```bash
+gj gradle-current-build
+gj gradle-current-test
+gj gradle-module-clean acceptance-test
+```
