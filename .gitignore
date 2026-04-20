@@ -68,6 +68,7 @@ vcpkg/
 .DS_Store
 .lesshst
 .wget-hsts
+.gitconfig
 
 # Application data
 .angular-config.json

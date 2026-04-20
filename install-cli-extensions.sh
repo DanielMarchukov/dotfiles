@@ -402,10 +402,7 @@ install_glab() {
         return 0
     fi
 
-    case "$(apt_arch_slug)" in
-        amd64) arch='x86_64' ;;
-        arm64) arch='arm64' ;;
-    esac
+    arch="$(apt_arch_slug)"
 
     tag="$(resolve_gitlab_latest_tag)"
     version="${tag#v}"
@@ -416,7 +413,7 @@ install_glab() {
         "glab" \
         "glab" \
         "$base_url" \
-        "glab_${version}_Linux_${arch}.tar.gz"
+        "glab_${version}_linux_${arch}.tar.gz"
     then
         return 0
     fi
@@ -577,6 +574,12 @@ main() {
         if ! cargo_install_if_missing "git-branchless" "git-branchless"; then
             record_failure "git-branchless" "stacked branch and rebase workflow"
         fi
+    fi
+
+    if skip_package tokenusage tu; then
+        warn "Skipping tokenusage because it was listed in SKIP_PACKAGES"
+    elif ! cargo_install_if_missing "tokenusage" "tu"; then
+        record_failure "tokenusage" "LLM token-usage reports (claude/codex)"
     fi
 
     refresh_tealdeer_cache

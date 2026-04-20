@@ -486,7 +486,7 @@ done
 # Top-level files stow will manage
 STOW_FILES=(
     .zshrc .zshenv .zprofile .profile .bash_profile
-    .p10k.zsh .gitconfig .gitignore_global .gitmodules
+    .p10k.zsh .gitignore_global .gitmodules
     .oh-my-zsh .tmux
 )
 
@@ -501,6 +501,10 @@ for item in "${CONFIG_ITEMS[@]}"; do
     backup_if_real "$HOME/.config/$item"
 done
 
+# Items managed outside of stow — drop stale symlinks so stow's restow scan
+# doesn't trip on absolute symlinks pointing back into the stow dir.
+backup_if_real "$HOME/.taskrc"
+
 if [[ "$BACKUP_NEEDED" == true ]]; then
     ok "Backups saved to $BACKUP_DIR"
 fi
@@ -512,10 +516,15 @@ stow --restow \
     -d "$(dirname "$DOTFILES_DIR")" \
     -t "$HOME" \
     --ignore='\.config' \
+    --ignore='\.claude' \
     --ignore='\.local' \
     --ignore='\.git' \
+    --ignore='\.gitconfig' \
+    --ignore='\.gitignore' \
     --ignore='\.taskrc' \
+    --ignore='windows' \
     --ignore='bootstrap\.sh' \
+    --ignore='install-cli-extensions\.sh' \
     --ignore='README.*' \
     "$(basename "$DOTFILES_DIR")"
 
@@ -554,7 +563,6 @@ patch_home() {
     fi
 }
 
-patch_home "$DOTFILES_DIR/.gitconfig"
 patch_home "$DOTFILES_DIR/.zshenv"
 patch_home "$DOTFILES_DIR/.zprofile"
 
