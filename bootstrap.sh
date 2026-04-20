@@ -693,6 +693,71 @@ fi
 patch_home "$DOTFILES_DIR/.taskrc"
 
 # ---------------------------------------------------------------------------
+# 19. uv (Python tool runner — required for MCP servers that ship via Python)
+# ---------------------------------------------------------------------------
+if ! command -v uv &>/dev/null; then
+    info "Installing uv..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh >/dev/null 2>&1
+    export PATH="$HOME/.local/bin:$PATH"
+    if command -v uv &>/dev/null; then
+        ok "uv: $(uv --version 2>&1)"
+    else
+        warn "uv install reported success but binary not on PATH"
+    fi
+else
+    ok "uv: $(uv --version 2>&1)"
+fi
+
+# ---------------------------------------------------------------------------
+# 20. Claude Code MCP servers (user scope — shared across all projects)
+# ---------------------------------------------------------------------------
+# MCP servers are installed globally. Basic Memory vaults are per-project;
+# initialize each project with: basic-memory project add <name> .
+MCP_SECRETS_FILE="$HOME/.config/secrets/mcp.env"
+
+register_mcp_stdio() {
+    local name="$1"; shift
+    if claude mcp list 2>/dev/null | grep -qE "^${name}:"; then
+        ok "MCP: $name (already registered)"
+    elif claude mcp add --scope user "$name" "$@" >/dev/null 2>&1; then
+        ok "MCP: $name"
+    else
+        warn "MCP: $name registration failed (non-fatal)"
+    fi
+}
+
+if ! command -v claude &>/dev/null; then
+    warn "claude CLI not found; skipping MCP registration (install Claude Code first, then re-run)"
+elif ! command -v uv &>/dev/null; then
+    warn "uv not available; skipping MCP registration"
+else
+    info "Registering Claude Code MCP servers (user scope)..."
+
+    register_mcp_stdio basic-memory uvx basic-memory mcp
+    register_mcp_stdio git uvx mcp-server-git
+
+    # Load optional secrets file (outside dotfiles repo — never committed)
+    if [[ -f "$MCP_SECRETS_FILE" ]]; then
+        # shellcheck source=/dev/null
+        set -a; source "$MCP_SECRETS_FILE"; set +a
+    fi
+
+    if claude mcp list 2>/dev/null | grep -qE '^context7:'; then
+        ok "MCP: context7 (already registered)"
+    elif [[ -n "${CONTEXT7_API_KEY:-}" ]]; then
+        if claude mcp add --scope user --transport http context7 \
+            https://mcp.context7.com/mcp \
+            --header "CONTEXT7_API_KEY: $CONTEXT7_API_KEY" >/dev/null 2>&1; then
+            ok "MCP: context7"
+        else
+            warn "MCP: context7 registration failed (non-fatal)"
+        fi
+    else
+        warn "MCP: context7 not registered — set CONTEXT7_API_KEY in $MCP_SECRETS_FILE"
+    fi
+fi
+
+# ---------------------------------------------------------------------------
 # Done
 # ---------------------------------------------------------------------------
 echo
@@ -702,8 +767,10 @@ info "Next steps:"
 info "  1. Log out and back in (or run: exec zsh)"
 info "  2. Set your terminal font to 'MesloLGS NF'"
 info "  3. Run 'gh auth login' to authenticate GitHub CLI"
+info "  4. Per project: run 'basic-memory project add <name> .' to init memory vault"
+info "     (Set CONTEXT7_API_KEY in ~/.config/secrets/mcp.env to enable context7 MCP)"
 if [[ "$BACKUP_NEEDED" == true ]]; then
-    info "  4. Old dotfiles backed up to: $BACKUP_DIR"
+    info "  5. Old dotfiles backed up to: $BACKUP_DIR"
 fi
 info "  Optional: install Go as needed"
 echo
