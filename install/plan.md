@@ -60,10 +60,11 @@ dotfiles/
     │   └── 08-node.sh
     ├── 03-dotfiles/
     │   ├── 01-repo.sh
-    │   ├── 02-powerlevel10k.sh
-    │   ├── 03-oh-my-zsh-plugins.sh
-    │   ├── 04-stow.sh
-    │   └── 05-patch-home.sh
+    │   ├── 02-runtime-deps.sh       # lift OMZ + TPM to runtime paths
+    │   ├── 03-p10k.sh
+    │   ├── 04-omz-plugins.sh
+    │   ├── 05-stow.sh
+    │   └── 06-patch-home.sh
     ├── 04-editors/
     │   ├── 01-neovim.sh
     │   ├── 02-tmux-plugins.sh
@@ -171,7 +172,7 @@ for removal alongside the legacy script during final swap.
   must exist first) → `06-patch-home` (sed on hardcoded paths).
 - **Neovim plugin sync (04-editors/03-neovim-plugins.sh)** needs:
   nvim binary (04-editors/01-neovim), `~/.config/nvim` symlink
-  (03-dotfiles/04-stow), and Temurin JDK (02-languages/01) for Mason
+  (03-dotfiles/05-stow), and Temurin JDK (02-languages/01) for Mason
   Java tools.
 - **Tmux plugins (04-editors/02-tmux-plugins.sh)** needs TPM installed
   at `~/.tmux/plugins/tpm` by bootstrap runtime dependency setup.
@@ -200,7 +201,7 @@ No cycles. Strictly monotonic by bucket number.
 | -------------- | ------------------ | ------------------------------------------------------ |
 | 01-system      | trivial            | single step                                            |
 | 02-languages   | partial            | JDK subchain stays ordered (01→02→05)                  |
-| 03-dotfiles    | partial            | `01-repo` first, `04-stow` after content, `05-patch-home` last |
+| 03-dotfiles    | partial            | `01-repo` first, `05-stow` after content, `06-patch-home` last |
 | 04-editors     | partial            | `01-neovim` before `03-neovim-plugins`                 |
 | 05-tools       | yes                | all siblings — no intra-bucket edges                   |
 | 06-shell       | yes                | both independent                                       |
@@ -223,13 +224,13 @@ refactoring.
    `export BACKUP_DIR` before invoking children; `common.sh` respects
    that via `BACKUP_DIR="${BACKUP_DIR:-...}"`.
 4. **The wholesale-`~/.config`-symlink guard** (`bootstrap.sh:506-515`)
-   must be preserved in `03-dotfiles/04-stow.sh` — dropping it risks
+   must be preserved in `03-dotfiles/05-stow.sh` — dropping it risks
    `backup_if_real` nuking the live `.config` submodule.
 5. **`.taskrc` is manually symlinked by `05-tools/05-taskwarrior.sh`,
    not by stow.** The stow invocation ignores `.taskrc`. Preserve both
    behaviors when extracting.
 6. **The stow `--ignore` list** (`bootstrap.sh:539-548`) is critical.
-   When extracting to `03-dotfiles/04-stow.sh`, the list must move
+   When extracting to `03-dotfiles/05-stow.sh`, the list must move
    verbatim. Also: **the new `install/` directory must be added to the
    ignore list** — otherwise stow will try to link `~/install/*`.
 7. **MCP requires `claude` CLI** which bootstrap does not install. The
@@ -299,8 +300,13 @@ until after clone.
 - [x] Sourcing guards on both.
 - [x] `COMBINED_CA_PEM` stripped from new lib; TODO added in
       legacy script.
-- [x] 7 bucket directories created under `install/`.
-- Not committed yet — uncommitted work.
+- [x] 7 bucket directories created under `install/` with brief
+      per-bucket `README.md` explaining scope, ordering, and
+      cross-bucket dependencies.
+- Committed and pushed (`1a8c061`). Bucket READMEs follow in a
+  separate commit once the dotfiles-bucket layout is reconciled with
+  the post-modernization naming (`02-runtime-deps`, `03-p10k`,
+  `04-omz-plugins`, `05-stow`, `06-patch-home`).
 
 ### Phase 2 — Extract per-step scripts (NEXT)
 
@@ -330,11 +336,12 @@ Extraction order (follows the bucket/step DAG):
 - 02-languages/07-rust.sh
 - 02-languages/08-node.sh
 - 03-dotfiles/01-repo.sh
-- 03-dotfiles/02-powerlevel10k.sh
-- 03-dotfiles/03-oh-my-zsh-plugins.sh
-- 03-dotfiles/04-stow.sh     (preserve ignore list + `.config`-guard;
+- 03-dotfiles/02-runtime-deps.sh  (lift OMZ + TPM to runtime paths)
+- 03-dotfiles/03-p10k.sh
+- 03-dotfiles/04-omz-plugins.sh
+- 03-dotfiles/05-stow.sh     (preserve ignore list + `.config`-guard;
                                ADD `install` to ignore list)
-- 03-dotfiles/05-patch-home.sh
+- 03-dotfiles/06-patch-home.sh
 - 04-editors/01-neovim.sh
 - 04-editors/02-tmux-plugins.sh
 - 04-editors/03-neovim-plugins.sh
@@ -383,7 +390,7 @@ Single commit:
 ## Open risks
 
 1. **Stow ignore list**: the new `install/` directory MUST be added to
-   `--ignore` when extracting `03-dotfiles/04-stow.sh`. Otherwise stow
+   `--ignore` when extracting `03-dotfiles/05-stow.sh`. Otherwise stow
    will try to link `~/install/*`.
 2. **BACKUP_DIR propagation**: orchestrator must `export BACKUP_DIR`
    before invoking children so all `backup_if_real` calls share one
