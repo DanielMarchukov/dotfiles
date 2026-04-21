@@ -40,6 +40,21 @@ backup_if_real() {
     fi
 }
 
+remove_legacy_repo_absolute_symlink() {
+    local target="$1"
+    local link_target
+
+    if [[ ! -L "$target" ]]; then
+        return 0
+    fi
+
+    link_target="$(readlink "$target" 2>/dev/null || true)"
+    if [[ "$link_target" == "$DOTFILES_DIR/"* ]]; then
+        rm -f "$target"
+        info "Removed legacy repo symlink $target -> $link_target"
+    fi
+}
+
 palantir_java_format_is_healthy() {
     command -v palantir-java-format &>/dev/null \
         && palantir-java-format --version >/dev/null 2>&1
@@ -525,12 +540,23 @@ done
 # doesn't trip on absolute symlinks pointing back into the stow dir.
 backup_if_real "$HOME/.taskrc"
 
+# Legacy hand-made links inside real directories confuse stow: they point into
+# the repo, but because they're absolute, stow won't treat them as owned links.
+if [[ -d "$HOME/bin" && -d "$DOTFILES_DIR/bin" ]]; then
+    shopt -s nullglob
+    for repo_bin_item in "$DOTFILES_DIR"/bin/*; do
+        remove_legacy_repo_absolute_symlink "$HOME/bin/$(basename "$repo_bin_item")"
+    done
+    shopt -u nullglob
+fi
+
 if [[ "$BACKUP_NEEDED" == true ]]; then
     ok "Backups saved to $BACKUP_DIR"
 fi
 
 # Stow top-level dotfiles (--restow is idempotent — re-links if already stowed)
-# Use -d with absolute path to avoid stow bug with absolute symlinks in $HOME
+# Use the repo parent as the stow dir so restow recreates relative links back
+# into ../repos/... after the legacy absolute-link cleanup above.
 info "Stowing dotfiles..."
 stow --restow \
     -d "$(dirname "$DOTFILES_DIR")" \
@@ -541,6 +567,7 @@ stow --restow \
     --ignore='\.git' \
     --ignore='\.gitconfig' \
     --ignore='\.gitignore' \
+    --ignore='\.codex' \
     --ignore='\.taskrc' \
     --ignore='windows' \
     --ignore='bootstrap\.sh' \
