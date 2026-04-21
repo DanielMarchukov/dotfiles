@@ -166,7 +166,9 @@ for removal alongside the legacy script during final swap.
   install time.
 - **Rust (02-languages/07-rust.sh)** enables cargo for three downstream
   steps: `05-tools/03-pay-respects`, `05-tools/04-cli-extensions`
-  (tokscale, rga fallback, etc.), `05-tools/05-taskwarrior`.
+  (rga / watchexec / git-branchless fallbacks), `05-tools/05-taskwarrior`
+  (TaskChampion backend). `tokscale` within cli-extensions is npm-based
+  — see the `02-languages/08-node` dependency.
 - **Dotfiles chain:** `01-repo` (clone + submodule sync) →
   `02-runtime-deps` (oh-my-zsh + TPM lift/move/install) + `03-p10k` +
   `04-omz-plugins` → `05-stow` (reads source tree once; everything
