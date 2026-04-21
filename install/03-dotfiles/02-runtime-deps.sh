@@ -159,8 +159,48 @@ ensure_runtime_git_checkout() {
 }
 
 # ---------------------------------------------------------------------------
+# Fix legacy wholesale ~/.tmux symlink
+# ---------------------------------------------------------------------------
+# Pre-modernization stow layout linked the entire ~/.tmux dir to
+# $DOTFILES_DIR/.tmux. After the submodule was removed, stow now
+# ignores .tmux, but the existing wholesale symlink persists and
+# causes any runtime content (e.g., TPM) to land inside the repo tree.
+# Convert to a real ~/.tmux directory and relocate TPM if needed.
+repair_legacy_tmux_symlink() {
+    local legacy_tmux_dir="$DOTFILES_DIR/.tmux"
+    if [[ ! -L "$HOME/.tmux" ]]; then
+        return 0
+    fi
+
+    local resolved
+    resolved="$(readlink -f "$HOME/.tmux" 2>/dev/null || true)"
+    if [[ "$resolved" != "$legacy_tmux_dir" ]]; then
+        return 0
+    fi
+
+    info "Repairing legacy ~/.tmux wholesale symlink..."
+    rm -f "$HOME/.tmux"
+    mkdir -p "$HOME/.tmux/plugins"
+
+    # Move any TPM checkout that landed inside the repo out to the
+    # real runtime location.
+    if [[ -d "$legacy_tmux_dir/plugins/tpm" ]]; then
+        mv "$legacy_tmux_dir/plugins/tpm" "$HOME/.tmux/plugins/tpm"
+        ok "Moved TPM from $legacy_tmux_dir/plugins/tpm to $HOME/.tmux/plugins/tpm"
+    fi
+
+    # Remove the now-empty repo-side .tmux scaffolding (gitignored)
+    if [[ -d "$legacy_tmux_dir" ]]; then
+        rm -rf "$legacy_tmux_dir"
+    fi
+
+    ok "~/.tmux is now a real directory"
+}
+
+# ---------------------------------------------------------------------------
 # Lift oh-my-zsh and TPM to their runtime locations
 # ---------------------------------------------------------------------------
+repair_legacy_tmux_symlink
 ensure_runtime_git_checkout "oh-my-zsh" "$OH_MY_ZSH_DIR" "$LEGACY_OH_MY_ZSH_DIR" \
     "https://github.com/ohmyzsh/ohmyzsh.git"
 ensure_runtime_git_checkout "Tmux Plugin Manager" "$TPM_DIR" "$LEGACY_TPM_DIR" \
