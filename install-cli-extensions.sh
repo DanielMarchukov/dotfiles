@@ -501,6 +501,27 @@ install_git_branchless() {
         "git-branchless-${tag}-${asset_arch}-unknown-linux-gnu.tar.gz"
 }
 
+install_tokscale() {
+    if command -v tokscale >/dev/null 2>&1; then
+        ok "tokscale already installed"
+        return 0
+    fi
+
+    if ! command -v npm >/dev/null 2>&1; then
+        warn "npm not found; cannot install tokscale"
+        return 1
+    fi
+
+    info "Installing tokscale via npm..."
+    if npm install -g tokscale@latest >/dev/null 2>&1; then
+        ok "tokscale installed"
+        return 0
+    fi
+
+    warn "tokscale npm install failed"
+    return 1
+}
+
 refresh_tealdeer_cache() {
     if command -v tldr >/dev/null 2>&1; then
         info "Refreshing tealdeer cache..."
@@ -578,10 +599,10 @@ main() {
         fi
     fi
 
-    if skip_package tokenusage tu; then
-        warn "Skipping tokenusage because it was listed in SKIP_PACKAGES"
-    elif ! cargo_install_if_missing "tokenusage" "tu"; then
-        record_failure "tokenusage" "LLM token-usage reports (claude/codex)"
+    if skip_package tokscale; then
+        warn "Skipping tokscale because it was listed in SKIP_PACKAGES"
+    elif ! install_tokscale; then
+        record_failure "tokscale" "multi-provider LLM token-usage analytics"
     fi
 
     refresh_tealdeer_cache

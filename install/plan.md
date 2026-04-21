@@ -164,18 +164,17 @@ for removal alongside the legacy script during final swap.
   install time.
 - **Rust (02-languages/07-rust.sh)** enables cargo for three downstream
   steps: `05-tools/03-pay-respects`, `05-tools/04-cli-extensions`
-  (tokenusage, rga fallback, etc.), `05-tools/05-taskwarrior`.
-- **Dotfiles chain:** `01-repo` (clone + submodule sync) → `02-p10k` +
-  `03-omz-plugins` (cloned into submodule) → `04-stow` (reads source
-  tree once; everything must exist first) → `05-patch-home` (sed on
-  hardcoded paths).
+  (tokscale, rga fallback, etc.), `05-tools/05-taskwarrior`.
+- **Dotfiles chain:** `01-repo` (clone + submodule sync) →
+  `02-runtime-deps` (oh-my-zsh + TPM lift/move/install) + `03-p10k` +
+  `04-omz-plugins` → `05-stow` (reads source tree once; everything
+  must exist first) → `06-patch-home` (sed on hardcoded paths).
 - **Neovim plugin sync (04-editors/03-neovim-plugins.sh)** needs:
   nvim binary (04-editors/01-neovim), `~/.config/nvim` symlink
   (03-dotfiles/04-stow), and Temurin JDK (02-languages/01) for Mason
   Java tools.
-- **Tmux plugins (04-editors/02-tmux-plugins.sh)** needs `~/.tmux`
-  symlink (03-dotfiles/04-stow) and the TPM submodule (fetched by
-  03-dotfiles/01-repo).
+- **Tmux plugins (04-editors/02-tmux-plugins.sh)** needs TPM installed
+  at `~/.tmux/plugins/tpm` by bootstrap runtime dependency setup.
 - **Taskwarrior (05-tools/05-taskwarrior.sh)** needs cargo from
   02-languages and the `.taskrc` file from 03-dotfiles (which it
   symlinks manually — NOT via stow, because the stow ignore list skips

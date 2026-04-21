@@ -72,6 +72,15 @@ For Linux/WSL bootstrap, use:
 ./bootstrap.sh
 ```
 
+Repository layout rules:
+
+- Keep hand-authored config in the repos.
+- Let mutable dependency installs live outside the repos.
+- Oh My Zsh lives at `~/.oh-my-zsh`; bootstrap migrates any legacy repo-backed install there.
+- Tmux plugins are installed by TPM into `~/.tmux/plugins`, not tracked under `.config/tmux/plugins`.
+- TPM itself is installed at `~/.tmux/plugins/tpm`, not versioned in the repo.
+- Neovim plugin checkouts live under `stdpath("data")` such as `~/.local/share/nvim`; only config and lockfiles belong in the repo.
+
 Bootstrap now also runs the shell-workflow extension installer by default. To skip that step on a constrained network, use:
 
 ```bash

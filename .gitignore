@@ -76,6 +76,8 @@ vcpkg/
 .offsetexplorer3/
 .redis-insight/
 .confluent/
+.oh-my-zsh/
+.tmux/
 .codex/
 .supermaven/
 .hawtjni/

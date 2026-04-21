@@ -19,6 +19,10 @@ DOTFILES_REPO="https://github.com/DanielMarchukov/dotfiles.git"
 DOTFILES_DIR="$HOME/repos/dotfiles"
 BACKUP_DIR="$HOME/.dotfiles-backup/$(date +%Y%m%d-%H%M%S)"
 BACKUP_NEEDED=false
+OH_MY_ZSH_DIR="$HOME/.oh-my-zsh"
+LEGACY_OH_MY_ZSH_DIR="$DOTFILES_DIR/.oh-my-zsh"
+TPM_DIR="$HOME/.tmux/plugins/tpm"
+LEGACY_TPM_DIR="$DOTFILES_DIR/.tmux/plugins/tpm"
 TEMURIN_JAVA_HOME="/usr/lib/jvm/temurin-21-jdk-amd64"
 GRADLE_VERSION="${GRADLE_VERSION:-8.11.1}"
 INSTALLCERT_SOURCE="${INSTALLCERT_SOURCE:-/mnt/c/Users/$USER/Downloads/InstallCert.java}"
@@ -52,6 +56,56 @@ remove_legacy_repo_absolute_symlink() {
     if [[ "$link_target" == "$DOTFILES_DIR/"* ]]; then
         rm -f "$target"
         info "Removed legacy repo symlink $target -> $link_target"
+    fi
+}
+
+runtime_path_is_legacy_symlink() {
+    local runtime_path="$1"
+    local legacy_path="$2"
+    local resolved_path
+
+    if [[ ! -L "$runtime_path" ]]; then
+        return 1
+    fi
+
+    resolved_path="$(readlink -f "$runtime_path" 2>/dev/null || true)"
+    [[ "$resolved_path" == "$legacy_path" ]]
+}
+
+ensure_runtime_git_checkout() {
+    local label="$1"
+    local runtime_path="$2"
+    local legacy_path="$3"
+    local repo_url="$4"
+
+    mkdir -p "$(dirname "$runtime_path")"
+
+    if runtime_path_is_legacy_symlink "$runtime_path" "$legacy_path"; then
+        rm -f "$runtime_path"
+        if [[ -d "$legacy_path" ]]; then
+            mv "$legacy_path" "$runtime_path"
+            ok "Migrated $label from repo checkout to $runtime_path"
+            return 0
+        fi
+    fi
+
+    if [[ ! -e "$runtime_path" && -d "$legacy_path" ]]; then
+        mv "$legacy_path" "$runtime_path"
+        ok "Migrated $label from repo checkout to $runtime_path"
+        return 0
+    fi
+
+    if [[ -d "$runtime_path/.git" ]]; then
+        ok "$label already installed"
+        return 0
+    fi
+
+    if [[ ! -e "$runtime_path" ]]; then
+        info "Installing $label..."
+        git clone --depth=1 "$repo_url" "$runtime_path"
+        ok "$label installed"
+    else
+        warn "$label path $runtime_path exists but is not a git checkout; leaving it untouched"
     fi
 }
 
@@ -457,19 +511,27 @@ fi
 
 # Init core submodules — always runs (idempotent, skips already-init'd)
 info "Syncing submodules..."
-git -C "$DOTFILES_DIR" submodule update --init .oh-my-zsh .config .tmux/plugins/tpm
+git -C "$DOTFILES_DIR" submodule update --init .config
 
-# Init nvim and tmux inside .config submodule
+# Init nvim inside .config submodule
 if [[ -f "$DOTFILES_DIR/.config/.gitmodules" ]]; then
-    git -C "$DOTFILES_DIR/.config" submodule update --init nvim tmux 2>/dev/null || true
+    git -C "$DOTFILES_DIR/.config" submodule update --init nvim 2>/dev/null || true
 fi
 
 ok "Dotfiles repo ready"
 
 # ---------------------------------------------------------------------------
-# 10. Powerlevel10k theme
+# 10. Runtime dependency checkouts
 # ---------------------------------------------------------------------------
-P10K_DIR="$DOTFILES_DIR/.oh-my-zsh/custom/themes/powerlevel10k"
+ensure_runtime_git_checkout "oh-my-zsh" "$OH_MY_ZSH_DIR" "$LEGACY_OH_MY_ZSH_DIR" \
+    "https://github.com/ohmyzsh/ohmyzsh.git"
+ensure_runtime_git_checkout "Tmux Plugin Manager" "$TPM_DIR" "$LEGACY_TPM_DIR" \
+    "https://github.com/tmux-plugins/tpm.git"
+
+# ---------------------------------------------------------------------------
+# 11. Powerlevel10k theme
+# ---------------------------------------------------------------------------
+P10K_DIR="$OH_MY_ZSH_DIR/custom/themes/powerlevel10k"
 if [[ ! -d "$P10K_DIR" ]]; then
     info "Installing Powerlevel10k..."
     git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$P10K_DIR"
@@ -479,9 +541,9 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 11. Oh-My-Zsh custom plugins
+# 12. Oh-My-Zsh custom plugins
 # ---------------------------------------------------------------------------
-ZSH_CUSTOM="$DOTFILES_DIR/.oh-my-zsh/custom"
+ZSH_CUSTOM="$OH_MY_ZSH_DIR/custom"
 
 declare -A PLUGINS=(
     [zsh-autosuggestions]="https://github.com/zsh-users/zsh-autosuggestions.git"
@@ -508,7 +570,6 @@ done
 STOW_FILES=(
     .zshrc .zshenv .zprofile .profile .bash_profile
     .p10k.zsh .gitignore_global .gitmodules
-    .oh-my-zsh .tmux
 )
 
 for f in "${STOW_FILES[@]}"; do
@@ -536,6 +597,18 @@ for item in "${CONFIG_ITEMS[@]}"; do
     backup_if_real "$HOME/.config/$item"
 done
 
+# .github items are managed individually so Copilot/global GitHub state can
+# coexist with other files under ~/.github without replacing the whole dir.
+if [[ -d "$DOTFILES_DIR/.github" ]]; then
+    mkdir -p "$HOME/.github"
+    while IFS= read -r repo_github_file; do
+        rel_path="${repo_github_file#"$DOTFILES_DIR/.github/"}"
+        target_path="$HOME/.github/$rel_path"
+        mkdir -p "$(dirname "$target_path")"
+        backup_if_real "$target_path"
+    done < <(find "$DOTFILES_DIR/.github" -type f | sort)
+fi
+
 # Items managed outside of stow — drop stale symlinks so stow's restow scan
 # doesn't trip on absolute symlinks pointing back into the stow dir.
 backup_if_real "$HOME/.taskrc"
@@ -562,14 +635,18 @@ stow --restow \
     -d "$(dirname "$DOTFILES_DIR")" \
     -t "$HOME" \
     --ignore='\.config' \
+    --ignore='\.github' \
     --ignore='\.claude' \
     --ignore='\.local' \
+    --ignore='\.oh-my-zsh' \
+    --ignore='\.tmux' \
     --ignore='\.git' \
     --ignore='\.gitconfig' \
     --ignore='\.gitignore' \
     --ignore='\.codex' \
     --ignore='\.taskrc' \
     --ignore='windows' \
+    --ignore='install' \
     --ignore='bootstrap\.sh' \
     --ignore='install-cli-extensions\.sh' \
     --ignore='install-mcp\.sh' \
@@ -583,6 +660,15 @@ for item in "${CONFIG_ITEMS[@]}"; do
         ok "Linked ~/.config/$item"
     fi
 done
+
+if [[ -d "$DOTFILES_DIR/.github" ]]; then
+    while IFS= read -r repo_github_file; do
+        rel_path="${repo_github_file#"$DOTFILES_DIR/.github/"}"
+        target_path="$HOME/.github/$rel_path"
+        ln -sfn "$repo_github_file" "$target_path"
+        ok "Linked ~/.github/$rel_path"
+    done < <(find "$DOTFILES_DIR/.github" -type f | sort)
+fi
 
 ok "Dotfiles stowed"
 
