@@ -4,16 +4,22 @@ System-level packages and the foundation every other bucket depends on.
 
 ## Scope
 
-Apt packages required by downstream toolchains: `sudo`, `git`, `curl`,
-`wget`, `jq`, `build-essential`, `cmake`, `unzip`, `python3`, `pipx`,
-`stow`, `fontconfig`, `sqlite3`, `zsh`, `tmux`, `fd-find`, `bat`,
-`ripgrep`, `zoxide`, `uuid-dev`, `libgnutls28-dev`, and the
-`fd`/`batcat` symlinks for Ubuntu naming quirks.
+- `01-packages.sh` — apt packages required by downstream toolchains:
+  `sudo`, `git`, `curl`, `wget`, `jq`, `build-essential`, `cmake`,
+  `unzip`, `python3`, `pipx`, `stow`, `fontconfig`, `sqlite3`, `zsh`,
+  `tmux`, `fd-find`, `bat`, `ripgrep`, `zoxide`, `uuid-dev`,
+  `libgnutls28-dev`, plus Ubuntu `fd`/`batcat` symlinks and `pipx
+  ensurepath`.
+- `02-locale.sh` — generates `en_US.UTF-8` and sets it as the system
+  default. Fixes the NVM `manpath: can't set the locale` warning on
+  fresh WSL installs.
 
 ## Ordering
 
-- Runs first. Every other bucket assumes these packages are present.
-- Single step — no intra-bucket concerns.
+- `01-packages` must run before `02-locale` (locale generation
+  assumes `locales` package available).
+- This bucket runs first overall. Every other bucket assumes its
+  outputs are present.
 
 ## Produces for downstream
 
@@ -22,3 +28,5 @@ Apt packages required by downstream toolchains: `sudo`, `git`, `curl`,
   and `05-tools`).
 - `stow` binary (consumed by `03-dotfiles/05-stow.sh`).
 - `git`/`curl`/`wget` (universally consumed).
+- Working UTF-8 locale so `nvm.sh` and other locale-strict tools stay
+  quiet.

@@ -48,7 +48,8 @@ dotfiles/
     │   ├── common.sh                # logging, platform, PATH/env, fs
     │   └── downloads.sh             # curl, archive, release tags, cargo
     ├── 01-system/
-    │   └── 01-packages.sh
+    │   ├── 01-packages.sh
+    │   └── 02-locale.sh             # en_US.UTF-8 generation
     ├── 02-languages/
     │   ├── 01-temurin-jdk.sh
     │   ├── 02-installcert-java.sh   # optional — gates on file presence
@@ -327,6 +328,7 @@ One commit per script. Each script:
 Extraction order (follows the bucket/step DAG):
 
 - 01-system/01-packages.sh
+- 01-system/02-locale.sh         (en_US.UTF-8 — silences nvm.sh manpath warning)
 - 02-languages/01-temurin-jdk.sh
 - 02-languages/02-installcert-java.sh
 - 02-languages/03-go.sh
