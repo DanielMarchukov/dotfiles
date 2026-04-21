@@ -9,6 +9,8 @@ err()   { printf '\033[0;31m[ ERR]\033[0m  %s\n' "$*" >&2; }
 LOCAL_BIN="$HOME/.local/bin"
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CARGO_INSTALL_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/cargo-install"
+# TODO: COMBINED_CA_PEM is work-specific (corporate CA bundle); remove
+# alongside this script when the install/*.sh migration completes.
 COMBINED_CA_PEM="$HOME/.aws/combined_cas.pem"
 SKIP_PACKAGES="${SKIP_PACKAGES:-${SKIP_CARGO_PACKAGES:-}}"
 FAILED_OPTIONAL_PACKAGES=()
