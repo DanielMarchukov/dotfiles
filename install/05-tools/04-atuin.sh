@@ -39,3 +39,10 @@ install_binary_from_archive_candidates \
     "atuin" \
     "$base_url" \
     "atuin-${asset_arch}.tar.gz"
+
+# Import existing shell history on fresh install. Only runs here (not on
+# the "already installed" early-exit path) so re-runs don't re-import.
+if command -v atuin >/dev/null 2>&1; then
+    info "Importing shell history into atuin..."
+    atuin import auto 2>/dev/null || warn "atuin import auto failed (non-fatal)"
+fi
