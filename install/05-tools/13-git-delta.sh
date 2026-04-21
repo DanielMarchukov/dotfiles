@@ -20,9 +20,16 @@ require_command sudo
 
 if command -v delta >/dev/null 2>&1; then
     ok "git-delta already installed"
-    exit 0
+else
+    info "Installing git-delta via apt..."
+    sudo apt-get install -y -qq git-delta
+    ok "git-delta installed"
 fi
 
-info "Installing git-delta via apt..."
-sudo apt-get install -y -qq git-delta
-ok "git-delta installed"
+# Wire delta into global git config. Idempotent — setting the same
+# value twice is a no-op.
+info "Configuring git to use delta as pager..."
+git config --global core.pager delta
+git config --global interactive.diffFilter 'delta --color-only'
+git config --global delta.navigate true
+ok "git-delta configured"
