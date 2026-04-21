@@ -36,7 +36,8 @@ sudo apt-get install -y -qq \
     unzip fontconfig \
     sqlite3 \
     jq \
-    uuid-dev libgnutls28-dev
+    uuid-dev libgnutls28-dev \
+    ca-certificates libssl-dev zlib1g-dev
 
 # ---------------------------------------------------------------------------
 # Ubuntu renaming quirks: fd → fdfind, bat → batcat
