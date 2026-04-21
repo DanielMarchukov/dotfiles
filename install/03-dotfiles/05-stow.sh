@@ -137,6 +137,7 @@ stow --restow \
     --ignore='windows' \
     --ignore='install' \
     --ignore='bootstrap\.sh' \
+    --ignore='bootstrap_v2\.sh' \
     --ignore='install-cli-extensions\.sh' \
     --ignore='install-mcp\.sh' \
     --ignore='README.*' \
