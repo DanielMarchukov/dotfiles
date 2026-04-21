@@ -74,8 +74,22 @@ dotfiles/
     │   ├── 01-fzf.sh
     │   ├── 02-github-cli.sh
     │   ├── 03-pay-respects.sh
-    │   ├── 04-cli-extensions.sh
-    │   └── 05-taskwarrior.sh
+    │   ├── 04-atuin.sh
+    │   ├── 05-tealdeer.sh
+    │   ├── 06-yq.sh
+    │   ├── 07-glab.sh
+    │   ├── 08-watchexec.sh
+    │   ├── 09-rga.sh
+    │   ├── 10-git-branchless.sh
+    │   ├── 11-tokscale.sh
+    │   ├── 12-direnv.sh
+    │   ├── 13-git-delta.sh
+    │   ├── 14-git-absorb.sh
+    │   ├── 15-hyperfine.sh
+    │   ├── 16-just.sh
+    │   ├── 17-timewarrior.sh
+    │   ├── 18-mosh.sh
+    │   └── 19-taskwarrior.sh
     ├── 06-shell/
     │   ├── 01-default-shell.sh
     │   └── 02-nerd-font.sh
@@ -352,10 +366,22 @@ Extraction order (follows the bucket/step DAG):
 - 05-tools/01-fzf.sh
 - 05-tools/02-github-cli.sh
 - 05-tools/03-pay-respects.sh
-- 05-tools/04-cli-extensions.sh   (move from repo-root
-                                    install-cli-extensions.sh; inline
-                                    its own helpers into lib sources)
-- 05-tools/05-taskwarrior.sh     (includes the manual .taskrc symlink)
+- 05-tools/04-atuin.sh           ┐
+- 05-tools/05-tealdeer.sh        │
+- 05-tools/06-yq.sh              │
+- 05-tools/07-glab.sh            │
+- 05-tools/08-watchexec.sh       ├── split per-tool from the former
+- 05-tools/09-rga.sh             │   repo-root install-cli-extensions.sh
+- 05-tools/10-git-branchless.sh  │   (one install_X function per script)
+- 05-tools/11-tokscale.sh        │
+- 05-tools/12-direnv.sh          │
+- 05-tools/13-git-delta.sh       │
+- 05-tools/14-git-absorb.sh      │
+- 05-tools/15-hyperfine.sh       │
+- 05-tools/16-just.sh            │
+- 05-tools/17-timewarrior.sh     │
+- 05-tools/18-mosh.sh            ┘
+- 05-tools/19-taskwarrior.sh     (includes the manual .taskrc symlink)
 - 06-shell/01-default-shell.sh
 - 06-shell/02-nerd-font.sh
 - 07-ai/01-mcp.sh                (move from repo-root install-mcp.sh)
