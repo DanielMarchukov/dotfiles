@@ -169,6 +169,8 @@ fi
 # atuin - richer history search without replacing the up-arrow flow
 if command -v atuin >/dev/null 2>&1; then
   eval "$(atuin init zsh --disable-up-arrow)"
+  # Unbind ? from atuin AI inline hook — it blocks the shell on startup
+  bindkey -r '?'
 fi
 
 # pay-respects (thefuck replacement in Rust)
@@ -290,16 +292,25 @@ alias kvim="NVIM_APPNAME=KickstartNvim nvim"
 # until it's actually needed. NVM will auto-load when you use node, npm, nvm, etc.
 export NVM_DIR="$HOME/.nvm"
 
-# Add node to PATH using cached default version (avoids slow ls command)
+# Add node to PATH without loading nvm during startup.
+typeset -a node_versions
+typeset default_version default_node_bin
+
 if [[ -s "$NVM_DIR/alias/default" ]]; then
-  # Use the default alias to find the version quickly (add 'v' prefix if missing)
-  local DEFAULT_VERSION=$(cat $NVM_DIR/alias/default)
-  [[ $DEFAULT_VERSION != v* ]] && DEFAULT_VERSION="v$DEFAULT_VERSION"
-  export PATH="$NVM_DIR/versions/node/$DEFAULT_VERSION/bin:$PATH"
+  default_version="$(<"$NVM_DIR/alias/default")"
+  if [[ "$default_version" == v* ]]; then
+    default_node_bin="$NVM_DIR/versions/node/$default_version/bin"
+  elif [[ "$default_version" != */* ]]; then
+    default_node_bin="$NVM_DIR/versions/node/v$default_version/bin"
+  fi
+fi
+
+if [[ -n "$default_node_bin" && -d "$default_node_bin" ]]; then
+  export PATH="$default_node_bin:$PATH"
 elif [[ -d "$NVM_DIR/versions/node" ]]; then
-  # Fallback: add the first version found (using glob instead of ls)
-  local node_versions=($NVM_DIR/versions/node/*)
-  if [[ ${#node_versions[@]} -gt 0 ]]; then
+  # Fall back to the newest installed Node version when the default alias isn't a concrete version.
+  node_versions=("$NVM_DIR"/versions/node/*(N/))
+  if (( ${#node_versions[@]} > 0 )); then
     export PATH="${node_versions[-1]}/bin:$PATH"
   fi
 fi
@@ -345,10 +356,7 @@ zsh-compile() {
 # fi
 
 
-export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
 eval "$(zoxide init zsh)"
-
-export PATH=$HOME/.nvm/versions/node/v24.14.1/bin:$PATH
 
 # =============================================================================
 # C++ DEVELOPMENT (vcpkg)
@@ -432,3 +440,10 @@ with_tibrv() {
 }
 
 alias tibrv='with_tibrv'
+
+# opencode
+export PATH=/home/dmarciukovas/.opencode/bin:$PATH
+
+# Clean up inherited PATH noise from older shell configs.
+path=(${path:#$NVM_DIR/versions/node/vlts/\*/bin})
+typeset -U path PATH

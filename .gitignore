@@ -73,6 +73,7 @@ vcpkg/
 # Application data
 .angular-config.json
 .testcontainers.properties
+tokscale-export-*.json
 .offsetexplorer3/
 .redis-insight/
 .confluent/
