@@ -154,6 +154,27 @@ if [[ -f "$LOCAL_PLUGINS_DIR/.claude-plugin/marketplace.json" ]]; then
         }
     ' "$KNOWN_MARKETPLACES" > "$tmp" && mv "$tmp" "$KNOWN_MARKETPLACES"
     ok "Registered dotfiles-lsp marketplace at $LOCAL_PLUGINS_DIR"
+
+    # Claude Code normally COPIES marketplace plugins into its cache on
+    # first scan, then serves from that stale copy. Replace each cache
+    # slot with a symlink to the live repo source so every repo edit is
+    # picked up by the next /reload-plugins without a re-install dance.
+    CACHE_BASE="$HOME/.claude/plugins/cache/dotfiles-lsp"
+    for plugin_dir in "$LOCAL_PLUGINS_DIR"/*/; do
+        plugin_name="$(basename "$plugin_dir")"
+        [[ "$plugin_name" == ".claude-plugin" ]] && continue
+        [[ -f "$plugin_dir/.claude-plugin/plugin.json" ]] || continue
+        version="$(jq -r '.version // "1.0.0"' "$plugin_dir/.claude-plugin/plugin.json")"
+        cache_slot="$CACHE_BASE/$plugin_name/$version"
+        mkdir -p "$(dirname "$cache_slot")"
+        if [[ -L "$cache_slot" ]]; then
+            ok "Cache symlink OK: $plugin_name@$version"
+        else
+            rm -rf "$cache_slot"
+            ln -sfn "${plugin_dir%/}" "$cache_slot"
+            ok "Linked cache slot $plugin_name@$version -> repo source"
+        fi
+    done
 else
     warn "$LOCAL_PLUGINS_DIR/.claude-plugin/marketplace.json missing — skipping custom-plugin marketplace registration"
 fi
