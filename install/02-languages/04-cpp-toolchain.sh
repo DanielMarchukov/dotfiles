@@ -47,7 +47,7 @@ fi
 
 sudo apt-get install -y -qq \
     g++-14 libstdc++-14-dev \
-    clang-19 clang-format-19 clang-tidy-19 llvm-19 \
+    clang-19 clang-format-19 clang-tidy-19 clangd-19 llvm-19 \
     ninja-build pkg-config \
     autoconf automake autoconf-archive libtool \
     linux-libc-dev lcov \
@@ -59,6 +59,13 @@ if command -v clang-19 &>/dev/null && ! command -v clang &>/dev/null; then
     sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
     sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-19 100
     sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-19 100
+fi
+
+# Unversioned clangd for tools (e.g., Claude Code clangd-lsp) that look
+# for `clangd` on PATH. Updates only if clangd-19 is present and no
+# unversioned clangd is already registered.
+if command -v clangd-19 &>/dev/null && ! command -v clangd &>/dev/null; then
+    sudo update-alternatives --install /usr/bin/clangd clangd /usr/bin/clangd-19 100
 fi
 
 ok "C++ toolchain"
