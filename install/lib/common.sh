@@ -5,8 +5,8 @@
 # Universal helpers for install/*.sh scripts. Source this first.
 #   source "$(dirname "$0")/lib/common.sh"
 #
-# Provides: logging (info/ok/warn/err), platform detection, PATH + toolchain
-# env setup, skip/failure tracking, backup + patch-home helpers.
+# Provides: logging (info/ok/warn/err), platform detection, PATH +
+# toolchain env setup, backup + patch-home helpers.
 #
 # Callers are responsible for `set -euo pipefail` — libraries must not
 # unilaterally change shell options.
@@ -77,29 +77,6 @@ apt_arch_slug() {
         x86_64) printf '%s\n' 'amd64' ;;
         aarch64) printf '%s\n' 'arm64' ;;
     esac
-}
-
-# ---------------------------------------------------------------------------
-# Skip / failure tracking
-# ---------------------------------------------------------------------------
-# SKIP_PACKAGES is a space-separated list of aliases to skip. Callers use
-# skip_package with one or more aliases; any match returns 0 (skip).
-SKIP_PACKAGES="${SKIP_PACKAGES:-${SKIP_CARGO_PACKAGES:-}}"
-FAILED_OPTIONAL_PACKAGES=()
-
-skip_package() {
-    local candidate
-    for candidate in "$@"; do
-        [[ " $SKIP_PACKAGES " == *" $candidate "* ]] && return 0
-    done
-    return 1
-}
-
-record_failure() {
-    local package="$1"
-    local reason="$2"
-    warn "Skipping $package after install failure ($reason)"
-    FAILED_OPTIONAL_PACKAGES+=("$package")
 }
 
 # ---------------------------------------------------------------------------

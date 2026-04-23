@@ -7,9 +7,9 @@
 #   source "$(dirname "$0")/lib/common.sh"
 #   source "$(dirname "$0")/lib/downloads.sh"
 #
-# Provides: curl helpers with optional corporate CA + retry, GitHub/GitLab
-# release-tag resolution, archive extraction, binary install from release
-# artifacts, cargo-install with retry + CA support.
+# Provides: curl helpers with retry, GitHub/GitLab release-tag
+# resolution, archive extraction, binary install from release artifacts,
+# cargo-install with retry.
 # =============================================================================
 
 # Sourcing guard
@@ -128,7 +128,7 @@ install_binary_from_archive_candidates() {
 }
 
 # ---------------------------------------------------------------------------
-# Cargo install with retry + CA support
+# Cargo install with retry
 # ---------------------------------------------------------------------------
 cargo_install_if_missing() {
     local package="$1"
