@@ -148,7 +148,7 @@ if [[ -f "$LOCAL_PLUGINS_DIR/.claude-plugin/marketplace.json" ]]; then
     tmp="$(mktemp)"
     jq --arg path "$LOCAL_PLUGINS_DIR" --arg now "$now" '
         ."dotfiles-lsp" = {
-            "source": { "source": "filesystem", "path": $path },
+            "source": { "source": "directory", "path": $path },
             "installLocation": $path,
             "lastUpdated": $now
         }
