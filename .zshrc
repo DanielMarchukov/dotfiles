@@ -442,7 +442,9 @@ with_tibrv() {
 alias tibrv='with_tibrv'
 
 # opencode
-export PATH=/home/dmarciukovas/.opencode/bin:$PATH
+if [[ -d "$HOME/.opencode/bin" ]]; then
+  export PATH="$HOME/.opencode/bin:$PATH"
+fi
 
 # Clean up inherited PATH noise from older shell configs.
 path=(${path:#$NVM_DIR/versions/node/vlts/\*/bin})
