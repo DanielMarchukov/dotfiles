@@ -1,0 +1,11 @@
+{
+  "bash": {
+    "command": "bash-language-server",
+    "args": ["start"],
+    "extensionToLanguage": {
+      ".sh": "bash",
+      ".bash": "bash",
+      ".zsh": "bash"
+    }
+  }
+}

@@ -9,7 +9,7 @@
 # written to ~/.claude/settings.json's enabledPlugins — prevents
 # enabled-but-broken entries.
 #
-# Handled plugins (all @claude-plugins-official):
+# Handled marketplace plugins (all @claude-plugins-official):
 #   rust-analyzer-lsp  — rust-analyzer       via rustup component
 #   clangd-lsp         — clangd              via apt
 #   pyright-lsp        — pyright             via npm
@@ -17,6 +17,14 @@
 #   gopls-lsp          — gopls               (installed by 02-languages/03-go.sh)
 #   jdtls-lsp          — jdtls               via Mason symlink
 #   typescript-lsp     — typescript-language-server via npm
+#
+# Custom plugins sourced from install/07-ai/plugins/ (this repo acts as
+# a filesystem marketplace named "dotfiles-lsp"):
+#   bash-lsp      — bash-language-server      via Mason symlink
+#   yaml-lsp      — yaml-language-server      via Mason symlink
+#   marksman-lsp  — marksman                  via Mason symlink
+#   neocmake-lsp  — neocmakelsp               via Mason symlink
+#   json-lsp      — vscode-json-language-server via Mason symlink
 #
 # Idempotent. Safe to re-run.
 # =============================================================================
@@ -121,6 +129,35 @@ if ! command -v typescript-language-server >/dev/null 2>&1; then
     fi
 fi
 
+# Custom-plugin LSP binaries — all from Mason (no upstream Ubuntu/npm path)
+for name in bash-language-server yaml-language-server marksman neocmakelsp vscode-json-language-server; do
+    command -v "$name" >/dev/null 2>&1 || symlink_mason_lsp "$name"
+done
+
+# ---------------------------------------------------------------------------
+# Register the dotfiles-lsp filesystem marketplace for custom plugins
+# ---------------------------------------------------------------------------
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+LOCAL_PLUGINS_DIR="$DOTFILES_DIR/install/07-ai/plugins"
+KNOWN_MARKETPLACES="$HOME/.claude/plugins/known_marketplaces.json"
+
+if [[ -f "$LOCAL_PLUGINS_DIR/.claude-plugin/marketplace.json" ]]; then
+    mkdir -p "$(dirname "$KNOWN_MARKETPLACES")"
+    [[ -f "$KNOWN_MARKETPLACES" ]] || echo '{}' > "$KNOWN_MARKETPLACES"
+    now="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+    tmp="$(mktemp)"
+    jq --arg path "$LOCAL_PLUGINS_DIR" --arg now "$now" '
+        ."dotfiles-lsp" = {
+            "source": { "source": "filesystem", "path": $path },
+            "installLocation": $path,
+            "lastUpdated": $now
+        }
+    ' "$KNOWN_MARKETPLACES" > "$tmp" && mv "$tmp" "$KNOWN_MARKETPLACES"
+    ok "Registered dotfiles-lsp marketplace at $LOCAL_PLUGINS_DIR"
+else
+    warn "$LOCAL_PLUGINS_DIR/.claude-plugin/marketplace.json missing — skipping custom-plugin marketplace registration"
+fi
+
 # ---------------------------------------------------------------------------
 # Enable plugins in ~/.claude/settings.json
 # ---------------------------------------------------------------------------
@@ -132,6 +169,7 @@ fi
 
 # Each entry: "<plugin_name>:<backing_binary>"
 LSP_PLUGINS=(
+    # Marketplace plugins (claude-plugins-official)
     "rust-analyzer-lsp@claude-plugins-official:rust-analyzer"
     "clangd-lsp@claude-plugins-official:clangd"
     "pyright-lsp@claude-plugins-official:pyright"
@@ -139,6 +177,12 @@ LSP_PLUGINS=(
     "gopls-lsp@claude-plugins-official:gopls"
     "jdtls-lsp@claude-plugins-official:jdtls"
     "typescript-lsp@claude-plugins-official:typescript-language-server"
+    # Custom plugins (dotfiles-lsp filesystem marketplace)
+    "bash-lsp@dotfiles-lsp:bash-language-server"
+    "yaml-lsp@dotfiles-lsp:yaml-language-server"
+    "marksman-lsp@dotfiles-lsp:marksman"
+    "neocmake-lsp@dotfiles-lsp:neocmakelsp"
+    "json-lsp@dotfiles-lsp:vscode-json-language-server"
 )
 
 info "Updating enabledPlugins in $SETTINGS_FILE..."

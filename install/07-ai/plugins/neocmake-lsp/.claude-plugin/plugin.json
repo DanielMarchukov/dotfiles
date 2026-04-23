@@ -1,0 +1,8 @@
+{
+  "name": "neocmake-lsp",
+  "description": "neocmakelsp Language Server for CMake scripts",
+  "version": "1.0.0",
+  "author": {
+    "name": "Daniel Marchukov"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "marksman-lsp",
+  "description": "Marksman Language Server for Markdown",
+  "version": "1.0.0",
+  "author": {
+    "name": "Daniel Marchukov"
+  }
+}

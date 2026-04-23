@@ -1,0 +1,8 @@
+{
+  "name": "yaml-lsp",
+  "description": "YAML Language Server (Red Hat) for CI configs, k8s manifests, compose files",
+  "version": "1.0.0",
+  "author": {
+    "name": "Daniel Marchukov"
+  }
+}

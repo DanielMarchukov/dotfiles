@@ -1,0 +1,10 @@
+{
+  "cmake": {
+    "command": "neocmakelsp",
+    "args": ["--stdio"],
+    "extensionToLanguage": {
+      ".cmake": "cmake",
+      "CMakeLists.txt": "cmake"
+    }
+  }
+}

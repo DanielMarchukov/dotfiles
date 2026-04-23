@@ -1,0 +1,40 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "dotfiles-lsp",
+  "description": "Local Claude Code LSP plugins for languages that lack an official marketplace plugin",
+  "owner": {
+    "name": "Daniel Marchukov"
+  },
+  "plugins": [
+    {
+      "name": "bash-lsp",
+      "description": "Bash language server for shell scripts",
+      "category": "development",
+      "source": "./bash-lsp"
+    },
+    {
+      "name": "yaml-lsp",
+      "description": "YAML language server (CI configs, k8s manifests, compose files)",
+      "category": "development",
+      "source": "./yaml-lsp"
+    },
+    {
+      "name": "marksman-lsp",
+      "description": "Marksman language server for Markdown",
+      "category": "development",
+      "source": "./marksman-lsp"
+    },
+    {
+      "name": "neocmake-lsp",
+      "description": "neocmakelsp language server for CMake scripts",
+      "category": "development",
+      "source": "./neocmake-lsp"
+    },
+    {
+      "name": "json-lsp",
+      "description": "JSON language server (package.json, tsconfig, settings)",
+      "category": "development",
+      "source": "./json-lsp"
+    }
+  ]
+}
