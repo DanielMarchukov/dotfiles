@@ -152,6 +152,14 @@ fi
 
 source $ZSH/oh-my-zsh.sh
 
+# Work around terminal/tmux stacks that mis-handle smkx/rmkx after prompt init.
+# oh-my-zsh installs zle-line-init/finish to toggle application keypad mode;
+# disabling that avoids shells that appear ready but ignore input until Esc.
+function zle-line-init() {}
+function zle-line-finish() {}
+zle -N zle-line-init
+zle -N zle-line-finish
+
 # =============================================================================
 # EXTERNAL TOOLS INITIALIZATION
 # =============================================================================
