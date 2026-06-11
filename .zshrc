@@ -96,7 +96,13 @@ fi
 # =============================================================================
 # OH-MY-ZSH CONFIGURATION
 # =============================================================================
-ZSH_THEME="powerlevel10k/powerlevel10k"
+# Powerlevel10k/gitstatus expects a real terminal. Skip the theme when zsh is
+# launched as interactive but without TTYs (for example `zsh -i -c ...`).
+if [[ -t 0 && -t 1 && -t 2 ]]; then
+  ZSH_THEME="powerlevel10k/powerlevel10k"
+else
+  ZSH_THEME=""
+fi
 
 # Performance optimizations (based on profiling research)
 DISABLE_AUTO_UPDATE="true"           # Disable auto-update checks (55.73% → ~20% improvement)
@@ -139,15 +145,17 @@ elif [[ "$PLATFORM" == "linux" ]]; then
 fi
 
 # Smart completion initialization (30.76% → ~10% improvement)
-# Only rebuild completion cache once per day instead of every shell startup
-# Must be done BEFORE sourcing oh-my-zsh
-autoload -Uz compinit
-if [[ -n ${ZSH_COMPDUMP}(#qNmh+24) ]]; then
-  # Completion dump is older than 24 hours, regenerate it
-  compinit
-else
-  # Use cached completion dump (much faster)
-  compinit -C
+# Debian's /etc/zsh/zshrc already runs compinit for interactive shells,
+# so only do our custom cache handling when completion hasn't been initialized yet.
+if [[ -z ${_comps+x} ]]; then
+  autoload -Uz compinit
+  if [[ -n ${ZSH_COMPDUMP}(#qNmh+24) ]]; then
+    # Completion dump is older than 24 hours, regenerate it
+    compinit
+  else
+    # Use cached completion dump (much faster)
+    compinit -C
+  fi
 fi
 
 source $ZSH/oh-my-zsh.sh
@@ -164,7 +172,9 @@ zle -N zle-line-finish
 # EXTERNAL TOOLS INITIALIZATION
 # =============================================================================
 # P10K theme
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+if [[ -n "$ZSH_THEME" && -f ~/.p10k.zsh ]]; then
+  source ~/.p10k.zsh
+fi
 
 # Modern CLI tools - Lazy load to improve startup time
 # Note: zoxide is integrated via oh-my-zsh z plugin, no separate init needed
@@ -253,7 +263,13 @@ alias tmxf="vim ~/.config/tmux/tmux.conf"
 
 # Source configs
 alias stmx="tmux source-file ~/.config/tmux/tmux.conf"
-alias szsh="source ~/.zshrc"
+szsh() {
+  if (( $# > 0 )); then
+    exec zsh "$@"
+  else
+    exec zsh -l
+  fi
+}
 
 # Global Justfile entrypoint for reusable user-level workflows
 gj() {
@@ -301,8 +317,9 @@ alias kvim="NVIM_APPNAME=KickstartNvim nvim"
 export NVM_DIR="$HOME/.nvm"
 
 # Add node to PATH without loading nvm during startup.
-typeset -a node_versions
-typeset default_version default_node_bin
+node_versions=()
+default_version=""
+default_node_bin=""
 
 if [[ -s "$NVM_DIR/alias/default" ]]; then
   default_version="$(<"$NVM_DIR/alias/default")"
@@ -388,7 +405,6 @@ ci() {
 
 # Load secrets last so local overrides win
 if [[ -f "$HOME/.secrets" ]]; then
-  chmod +x "$HOME/.secrets"
   source "$HOME/.secrets"
 fi
 
