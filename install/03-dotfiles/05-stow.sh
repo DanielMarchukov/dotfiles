@@ -2,7 +2,7 @@
 # =============================================================================
 # install/03-dotfiles/05-stow.sh
 #
-# Backs up conflicting $HOME files, invokes `stow --restow` to install
+# Backs up conflicting $HOME files, invokes `stow --stow` to install
 # top-level dotfiles, then per-item symlinks for .config/* and .github/*.
 #
 # Preserves the wholesale-.config-symlink guard and the legacy repo-
@@ -42,6 +42,23 @@ remove_legacy_repo_absolute_symlink() {
 
     link_target="$(readlink "$target" 2>/dev/null || true)"
     if [[ "$link_target" == "$DOTFILES_DIR/"* ]]; then
+        rm -f "$target"
+        info "Removed legacy repo symlink $target -> $link_target"
+    fi
+}
+
+remove_repo_symlink_any_form() {
+    local target="$1"
+    local link_target
+    local resolved_target
+
+    if [[ ! -L "$target" ]]; then
+        return 0
+    fi
+
+    link_target="$(readlink "$target" 2>/dev/null || true)"
+    resolved_target="$(readlink -f "$target" 2>/dev/null || true)"
+    if [[ "$resolved_target" == "$DOTFILES_DIR/"* ]]; then
         rm -f "$target"
         info "Removed legacy repo symlink $target -> $link_target"
     fi
@@ -112,15 +129,19 @@ if [[ -d "$HOME/bin" && -d "$DOTFILES_DIR/bin" ]]; then
     shopt -u nullglob
 fi
 
+remove_repo_symlink_any_form "$HOME/test"
+
 if [[ "$BACKUP_NEEDED" == true ]]; then
     ok "Backups saved to $BACKUP_DIR"
 fi
 
 # ---------------------------------------------------------------------------
-# Stow top-level dotfiles (--restow is idempotent — re-links if already stowed)
+# Stow top-level dotfiles. Plain `stow` keeps existing correct links and avoids
+# GNU Stow restow warnings when unrelated absolute Windows-backed symlinks live
+# directly under $HOME.
 # ---------------------------------------------------------------------------
 info "Stowing dotfiles..."
-stow --restow \
+stow \
     -d "$(dirname "$DOTFILES_DIR")" \
     -t "$HOME" \
     --ignore='\.config' \
@@ -134,6 +155,7 @@ stow --restow \
     --ignore='\.gitignore' \
     --ignore='\.codex' \
     --ignore='\.taskrc' \
+    --ignore='test' \
     --ignore='windows' \
     --ignore='install' \
     --ignore='bootstrap\.sh' \
