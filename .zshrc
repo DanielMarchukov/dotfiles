@@ -46,6 +46,11 @@ elif [[ "$PLATFORM" == "linux" ]]; then
   # Linux-specific paths
   export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:/usr/local/go/bin:$GOPATH/bin:$PATH
 
+  # Local Horizon CLI install from this workspace
+  if [[ -d "/home/dmarciukovas/repos/prophet-agent-tools/horizon-cli/build/install/horizon/bin" ]]; then
+    export PATH="/home/dmarciukovas/repos/prophet-agent-tools/horizon-cli/build/install/horizon/bin:$PATH"
+  fi
+
   # Prefer Temurin 21 when installed, then fall back to distro OpenJDK 21
   if [[ -d "/usr/lib/jvm/temurin-21-jdk-amd64" ]]; then
     export JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64
