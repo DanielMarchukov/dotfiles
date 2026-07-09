@@ -276,6 +276,13 @@ szsh() {
   fi
 }
 
+# Pull the current repo, then bring all recursive submodules up to date.
+gls() {
+  command git pull --recurse-submodules=no "$@" &&
+    command git submodule sync --recursive &&
+    command git submodule update --init --remote --recursive
+}
+
 # Global Justfile entrypoint for reusable user-level workflows
 gj() {
   command "$HOME/bin/gj" "$@"
