@@ -171,7 +171,8 @@ sudo apt-get install -y -qq \
     unzip fontconfig \
     sqlite3 \
     jq \
-    uuid-dev libgnutls28-dev
+    uuid-dev libgnutls28-dev \
+    zathura zathura-pdf-mupdf
 
 # fd is packaged as 'fdfind' on Ubuntu — create symlink if needed
 if command -v fdfind &>/dev/null && ! command -v fd &>/dev/null; then
@@ -378,20 +379,12 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 3. Neovim (latest stable via GitHub release)
+# 3. Neovim (latest stable via GitHub release — install or upgrade)
 # ---------------------------------------------------------------------------
-if ! command -v nvim &>/dev/null; then
-    info "Installing Neovim..."
-    NVIM_VERSION=$(curl -fsSL https://api.github.com/repos/neovim/neovim/releases/latest | jq -r '.tag_name')
-    curl -fsSL -o /tmp/nvim-linux-x86_64.tar.gz \
-        "https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim-linux-x86_64.tar.gz"
-    sudo rm -rf /opt/nvim-linux-x86_64
-    sudo tar xzf /tmp/nvim-linux-x86_64.tar.gz -C /opt/
-    sudo ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim
-    rm -f /tmp/nvim-linux-x86_64.tar.gz
-    ok "Neovim ${NVIM_VERSION} installed"
+if [[ -x "$DOTFILES_DIR/install-nvim.sh" ]]; then
+    "$DOTFILES_DIR/install-nvim.sh"
 else
-    ok "Neovim: $(nvim --version | head -1)"
+    warn "install-nvim.sh not found or not executable; skipping Neovim"
 fi
 
 # ---------------------------------------------------------------------------
@@ -447,6 +440,7 @@ CARGO_TOOLS=(
     "cargo-llvm-cov"    # code coverage
     "cargo-audit"       # security vulnerability audit
     "cargo-deny"        # dependency license/source linting
+    "cargo-make"        # task runner (overseer.nvim Rust tasks)
 )
 
 for tool in "${CARGO_TOOLS[@]}"; do
@@ -475,6 +469,24 @@ if [[ ! -d "$NVM_DIR" ]]; then
     ok "Node.js installed: $(node --version)"
 else
     ok "NVM already installed"
+fi
+
+# ---------------------------------------------------------------------------
+# 7b. mermaid-cli (mmdc) — renders mermaid diagrams for render-markdown.nvim
+# ---------------------------------------------------------------------------
+# shellcheck source=/dev/null
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+if command -v npm &>/dev/null; then
+    if ! command -v mmdc &>/dev/null; then
+        info "Installing mermaid-cli (mmdc)..."
+        npm install -g @mermaid-js/mermaid-cli >/dev/null 2>&1 \
+            && ok "mermaid-cli installed" \
+            || warn "mermaid-cli install failed (non-fatal)"
+    else
+        ok "mermaid-cli: already installed"
+    fi
+else
+    warn "npm not available; skipping mermaid-cli"
 fi
 
 # ---------------------------------------------------------------------------
