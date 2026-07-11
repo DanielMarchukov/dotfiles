@@ -752,22 +752,47 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 16. Install Nerd Font (for Powerlevel10k icons)
+# 16. Install Nerd Font (0xProto — terminal + Neovim glyphs and p10k icons)
+#     Installs on the Linux side (WSLg / fontconfig). The interactive terminal
+#     renders host-side, so also install this font on Windows (see Next steps).
 # ---------------------------------------------------------------------------
 FONT_DIR="$HOME/.local/share/fonts"
-if ! fc-list 2>/dev/null | grep -qi "MesloLGS"; then
-    info "Installing MesloLGS Nerd Font..."
+if ! fc-list 2>/dev/null | grep -qi "0xProto"; then
+    info "Installing 0xProto Nerd Font..."
     mkdir -p "$FONT_DIR"
-    FONT_BASE="https://github.com/romkatv/powerlevel10k-media/raw/master"
-    for variant in "Regular" "Bold" "Italic" "Bold%20Italic"; do
-        name="${variant//%20/ }"
-        curl -fsSL -o "$FONT_DIR/MesloLGS NF ${name}.ttf" \
-            "${FONT_BASE}/MesloLGS%20NF%20${variant}.ttf"
-    done
+    font_tmp="$(mktemp -d)"
+    curl -fsSL -o "$font_tmp/0xProto.zip" \
+        "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/0xProto.zip"
+    unzip -qo "$font_tmp/0xProto.zip" '*.ttf' -d "$FONT_DIR"
+    rm -rf "$font_tmp"
     fc-cache -f "$FONT_DIR"
-    ok "MesloLGS Nerd Font installed"
+    ok "0xProto Nerd Font installed"
 else
-    ok "MesloLGS Nerd Font already installed"
+    ok "0xProto Nerd Font already installed"
+fi
+
+# Under WSL the interactive terminal renders host-side, so install 0xProto on
+# Windows too (per-user, no admin): copy the .ttf into the per-user Fonts dir
+# and register them under HKCU. Idempotent; requires Windows interop.
+if grep -qi microsoft /proc/version 2>/dev/null && command -v reg.exe >/dev/null 2>&1; then
+    win_localappdata="$(cmd.exe /c 'echo %LOCALAPPDATA%' 2>/dev/null | tr -d '\r')"
+    win_fonts_wsl="$([[ -n "$win_localappdata" ]] && wslpath "$win_localappdata" 2>/dev/null)/Microsoft/Windows/Fonts"
+    reg_key='HKCU\Software\Microsoft\Windows NT\CurrentVersion\Fonts'
+    if [[ -n "$win_localappdata" ]] && ! reg.exe query "$reg_key" 2>/dev/null | grep -qi '0xProto'; then
+        info "Installing 0xProto Nerd Font on Windows (per-user)..."
+        mkdir -p "$win_fonts_wsl"
+        for f in "$FONT_DIR"/0xProto*.ttf; do
+            [[ -e "$f" ]] || continue
+            base="$(basename "$f")"
+            cp -f "$f" "$win_fonts_wsl/$base"
+            reg_name="$(printf '%s' "$base" | sed -E 's/\.ttf$//; s/0xProtoNerdFont/0xProto Nerd Font/; s/Mono/ Mono/; s/Propo/ Propo/; s/-/ /') (TrueType)"
+            reg.exe add "$reg_key" /v "$reg_name" /t REG_SZ \
+                /d "$(wslpath -w "$win_fonts_wsl/$base")" /f >/dev/null 2>&1 || true
+        done
+        ok "0xProto Nerd Font installed on Windows (restart your terminal to use it)"
+    else
+        ok "0xProto Nerd Font already present on Windows (or interop unavailable)"
+    fi
 fi
 
 # ---------------------------------------------------------------------------
@@ -855,7 +880,8 @@ ok "Bootstrap complete!"
 echo
 info "Next steps:"
 info "  1. Log out and back in (or run: exec zsh)"
-info "  2. Set your terminal font to 'MesloLGS NF'"
+info "  2. Set your terminal font to '0xProto Nerd Font Mono' (installed on"
+info "     Windows automatically under WSL; restart the terminal to pick it up)"
 info "  3. Run 'gh auth login' to authenticate GitHub CLI"
 info "  4. Per project: run 'basic-memory project add <name> .' to init memory vault"
 info "     (Set CONTEXT7_API_KEY in ~/.config/secrets/mcp.env to enable context7 MCP)"
