@@ -165,7 +165,7 @@ info "Ensuring system packages are installed..."
 sudo apt-get update -qq
 sudo apt-get install -y -qq \
     zsh git curl wget stow tmux \
-    fd-find bat ripgrep zoxide \
+    fd-find bat ripgrep zoxide chafa \
     python3 pipx \
     build-essential cmake \
     unzip fontconfig \
