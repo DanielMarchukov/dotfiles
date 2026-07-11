@@ -796,6 +796,21 @@ if grep -qi microsoft /proc/version 2>/dev/null && command -v reg.exe >/dev/null
 fi
 
 # ---------------------------------------------------------------------------
+# 16c. WezTerm config (deploy to Windows under WSL)
+#      WezTerm runs host-side, so copy the repo's config to %USERPROFILE%.
+# ---------------------------------------------------------------------------
+if grep -qi microsoft /proc/version 2>/dev/null && command -v cmd.exe >/dev/null 2>&1 \
+   && [[ -f "$DOTFILES_DIR/wezterm/wezterm.lua" ]]; then
+    win_home="$(wslpath "$(cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')" 2>/dev/null || true)"
+    if [[ -n "$win_home" && -d "$win_home" ]]; then
+        info "Deploying WezTerm config to Windows..."
+        mkdir -p "$win_home/.config/wezterm"
+        cp -f "$DOTFILES_DIR/wezterm/wezterm.lua" "$win_home/.config/wezterm/wezterm.lua"
+        ok "WezTerm config deployed to $win_home/.config/wezterm/wezterm.lua"
+    fi
+fi
+
+# ---------------------------------------------------------------------------
 # 17. Neovim plugin sync (headless)
 # ---------------------------------------------------------------------------
 if command -v nvim &>/dev/null; then
