@@ -172,7 +172,7 @@ sudo apt-get install -y -qq \
     sqlite3 \
     jq \
     uuid-dev libgnutls28-dev \
-    zathura zathura-pdf-mupdf
+    libfontconfig1-dev
 
 # fd is packaged as 'fdfind' on Ubuntu — create symlink if needed
 if command -v fdfind &>/dev/null && ! command -v fd &>/dev/null; then
@@ -453,6 +453,23 @@ for tool in "${CARGO_TOOLS[@]}"; do
         ok "cargo tool: ${tool}"
     fi
 done
+
+# ---------------------------------------------------------------------------
+# 6b. tdf (terminal PDF viewer — in-terminal vimtex preview)
+#     Renders PDF pages inside the terminal via the kitty/sixel graphics
+#     protocol, so it needs a graphics-capable terminal (e.g. WezTerm or
+#     Windows Terminal for sixel) to actually display. Built from git — the
+#     'tdf' name on crates.io is an unrelated library. Needs clang (installed
+#     in the C++ section) + libfontconfig1-dev (installed above).
+# ---------------------------------------------------------------------------
+if ! command -v tdf &>/dev/null; then
+    info "Installing tdf (terminal PDF viewer)..."
+    cargo install --git https://github.com/itsjunetime/tdf.git --quiet 2>/dev/null \
+        && ok "tdf installed" \
+        || warn "tdf install failed (needs clang + libfontconfig1-dev; non-fatal)"
+else
+    ok "tdf: already installed"
+fi
 
 # ---------------------------------------------------------------------------
 # 7. NVM + Node.js
