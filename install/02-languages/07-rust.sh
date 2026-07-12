@@ -45,10 +45,10 @@ CARGO_TOOLS=(
     "cargo-llvm-cov"    # code coverage
     "cargo-audit"       # security vulnerability audit
     "cargo-deny"        # dependency license/source linting
+    "cargo-make"        # task runner (overseer.nvim Rust tasks)
 )
 
 for tool in "${CARGO_TOOLS[@]}"; do
-    bin_name="${tool}"
     if ! cargo install --list 2>/dev/null | grep -q "^${tool} "; then
         info "Installing ${tool}..."
         cargo install "${tool}" --quiet 2>/dev/null \

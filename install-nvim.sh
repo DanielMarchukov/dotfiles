@@ -3,7 +3,7 @@
 # Neovim installer / updater
 # Installs or upgrades Neovim to the latest stable GitHub release tarball.
 # Idempotent — safe to re-run; skips work when already on the latest version.
-# Invoked by bootstrap.sh or stand-alone. Requires sudo for /opt + /usr/local.
+# Invoked by install/04-editors/01-neovim.sh or stand-alone. Requires sudo.
 #
 #   ./install-nvim.sh                 # install or upgrade to latest stable
 #   NVIM_CHANNEL=nightly ./install-nvim.sh   # track the nightly prerelease

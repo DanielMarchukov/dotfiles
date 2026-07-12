@@ -6,7 +6,7 @@
 # top-level dotfiles, then per-item symlinks for .config/* and .github/*.
 #
 # Preserves the wholesale-.config-symlink guard and the legacy repo-
-# absolute-link cleanup verbatim from bootstrap.sh Section 12.
+# absolute-link cleanup ported from the legacy monolithic bootstrap.
 #
 # Depends on 03-dotfiles/01-repo.sh (.config submodule + contents),
 # 02-runtime-deps.sh (OMZ + TPM at runtime paths), 03-p10k.sh +

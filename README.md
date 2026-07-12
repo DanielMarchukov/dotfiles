@@ -81,10 +81,10 @@ Repository layout rules:
 - TPM itself is installed at `~/.tmux/plugins/tpm`, not versioned in the repo.
 - Neovim plugin checkouts live under `stdpath("data")` such as `~/.local/share/nvim`; only config and lockfiles belong in the repo.
 
-Bootstrap now also runs the shell-workflow extension installer by default. To skip that step on a constrained network, use:
+The orchestrator runs every `install/<bucket>/<step>.sh` in order by default. To skip steps on a constrained network, set `SKIP_SECTIONS` (space-separated bucket prefixes or `<bucket>/<step>` tags):
 
 ```bash
-SKIP_CLI_EXTENSIONS=1 ./bootstrap.sh
+SKIP_SECTIONS="05-tools" ./bootstrap.sh
 ```
 
 You can also rerun the extension installer directly:

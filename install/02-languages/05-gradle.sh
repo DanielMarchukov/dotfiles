@@ -7,7 +7,7 @@
 # binary to /usr/local/bin/gradle.
 #
 # Reinstalls if the currently-active gradle reports a different version
-# (matches the version-pin check from bootstrap.sh).
+# (matches the version-pin check from the legacy monolithic bootstrap).
 #
 # Third step of the JDK subchain:
 #   01-temurin-jdk → 02-installcert-java → 05-gradle

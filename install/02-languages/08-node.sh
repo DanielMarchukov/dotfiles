@@ -36,3 +36,21 @@ if [[ ! -d "$NVM_DIR" ]]; then
 else
     ok "NVM already installed"
 fi
+
+# ---------------------------------------------------------------------------
+# mermaid-cli (mmdc) — renders mermaid diagrams for render-markdown.nvim
+# ---------------------------------------------------------------------------
+# shellcheck source=/dev/null
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+if command -v npm &>/dev/null; then
+    if ! command -v mmdc &>/dev/null; then
+        info "Installing mermaid-cli (mmdc)..."
+        npm install -g @mermaid-js/mermaid-cli >/dev/null 2>&1 \
+            && ok "mermaid-cli installed" \
+            || warn "mermaid-cli install failed (non-fatal)"
+    else
+        ok "mermaid-cli: already installed"
+    fi
+else
+    warn "npm not available; skipping mermaid-cli"
+fi
