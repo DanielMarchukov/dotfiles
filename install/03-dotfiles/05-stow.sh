@@ -158,10 +158,9 @@ stow \
     --ignore='test' \
     --ignore='windows' \
     --ignore='install' \
+    --ignore='wezterm' \
     --ignore='bootstrap\.sh' \
-    --ignore='bootstrap_v2\.sh' \
-    --ignore='install-cli-extensions\.sh' \
-    --ignore='install-mcp\.sh' \
+    --ignore='install-nvim\.sh' \
     --ignore='README.*' \
     "$(basename "$DOTFILES_DIR")"
 

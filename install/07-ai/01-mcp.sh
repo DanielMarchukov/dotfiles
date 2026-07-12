@@ -10,7 +10,7 @@
 #   - git (stdio via `uvx mcp-server-git`)
 #   - context7 (HTTP, requires CONTEXT7_API_KEY in mcp.env)
 #
-# Extracted from repo-root install-mcp.sh.
+# Extracted from the legacy MCP installer.
 # =============================================================================
 set -euo pipefail
 

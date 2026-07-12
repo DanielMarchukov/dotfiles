@@ -3,7 +3,7 @@
 # install/05-tools/04-atuin.sh
 #
 # Installs atuin (shell history sync / search) from the official GitHub
-# release. Split out from install-cli-extensions.sh.
+# release. Split out from the legacy CLI-extensions installer.
 # =============================================================================
 set -euo pipefail
 

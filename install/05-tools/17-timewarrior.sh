@@ -3,7 +3,7 @@
 # install/05-tools/17-timewarrior.sh
 #
 # Installs timewarrior via apt. Binary command is `timew`.
-# Split out from install-cli-extensions.sh.
+# Split out from the legacy CLI-extensions installer.
 # =============================================================================
 set -euo pipefail
 

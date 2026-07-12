@@ -2,7 +2,7 @@
 # =============================================================================
 # install/05-tools/15-hyperfine.sh
 #
-# Installs hyperfine via apt. Split out from install-cli-extensions.sh.
+# Installs hyperfine via apt. Split out from the legacy CLI-extensions installer.
 # =============================================================================
 set -euo pipefail
 

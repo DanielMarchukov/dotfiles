@@ -5,7 +5,7 @@
 # Installs glab (GitLab CLI) from the official GitLab release. Falls
 # back to the Ubuntu apt package if the release download fails.
 #
-# Split out from install-cli-extensions.sh.
+# Split out from the legacy CLI-extensions installer.
 # =============================================================================
 set -euo pipefail
 

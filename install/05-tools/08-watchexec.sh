@@ -5,7 +5,7 @@
 # Installs watchexec from official GitHub release (musl preferred, gnu
 # fallback). If that fails, falls back to cargo install watchexec-cli.
 #
-# Split out from install-cli-extensions.sh.
+# Split out from the legacy CLI-extensions installer.
 # =============================================================================
 set -euo pipefail
 

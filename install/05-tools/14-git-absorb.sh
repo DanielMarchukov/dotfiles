@@ -2,7 +2,7 @@
 # =============================================================================
 # install/05-tools/14-git-absorb.sh
 #
-# Installs git-absorb via apt. Split out from install-cli-extensions.sh.
+# Installs git-absorb via apt. Split out from the legacy CLI-extensions installer.
 # =============================================================================
 set -euo pipefail
 

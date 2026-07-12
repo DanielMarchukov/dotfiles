@@ -87,11 +87,7 @@ The orchestrator runs every `install/<bucket>/<step>.sh` in order by default. To
 SKIP_SECTIONS="05-tools" ./bootstrap.sh
 ```
 
-You can also rerun the extension installer directly:
-
-```bash
-./install-cli-extensions.sh
-```
+To rerun a single step, run its script directly, e.g. `install/05-tools/04-atuin.sh`.
 
 That installer adds `direnv`, `atuin`, `delta`, `git-absorb`, `git-branchless`, `glab`, `just`, `hyperfine`, `timewarrior`, `yq`, `watchexec`, `tealdeer`/`tldr`, `rga`, and `mosh`.
 

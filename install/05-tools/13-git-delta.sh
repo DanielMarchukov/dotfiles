@@ -3,7 +3,7 @@
 # install/05-tools/13-git-delta.sh
 #
 # Installs git-delta via apt. Binary command is `delta`.
-# Split out from install-cli-extensions.sh.
+# Split out from the legacy CLI-extensions installer.
 # =============================================================================
 set -euo pipefail
 

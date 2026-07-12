@@ -5,7 +5,7 @@
 # Installs yq v4 (mikefarah/yq) from official GitHub release. Skips if
 # a v4 binary is already present.
 #
-# Split out from install-cli-extensions.sh.
+# Split out from the legacy CLI-extensions installer.
 # =============================================================================
 set -euo pipefail
 

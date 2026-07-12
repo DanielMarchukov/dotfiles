@@ -8,7 +8,7 @@
 # is symlinked directly to tldr-real. $HOME/.local/bin/tealdeer is
 # symlinked to tldr. Also refreshes the tldr cache once installed.
 #
-# Split out from install-cli-extensions.sh.
+# Split out from the legacy CLI-extensions installer.
 # =============================================================================
 set -euo pipefail
 

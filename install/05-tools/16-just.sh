@@ -2,7 +2,7 @@
 # =============================================================================
 # install/05-tools/16-just.sh
 #
-# Installs just via apt. Split out from install-cli-extensions.sh.
+# Installs just via apt. Split out from the legacy CLI-extensions installer.
 # =============================================================================
 set -euo pipefail
 

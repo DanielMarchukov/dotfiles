@@ -2,7 +2,7 @@
 # =============================================================================
 # install/05-tools/12-direnv.sh
 #
-# Installs direnv via apt. Split out from install-cli-extensions.sh.
+# Installs direnv via apt. Split out from the legacy CLI-extensions installer.
 # =============================================================================
 set -euo pipefail
 

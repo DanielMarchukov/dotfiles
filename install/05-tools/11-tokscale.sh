@@ -5,7 +5,7 @@
 # Installs tokscale (multi-provider LLM token-usage analytics) via
 # `npm install -g`. Depends on 02-languages/08-node.sh for npm.
 #
-# Split out from install-cli-extensions.sh.
+# Split out from the legacy CLI-extensions installer.
 # =============================================================================
 set -euo pipefail
 

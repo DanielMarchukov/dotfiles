@@ -1,8 +1,7 @@
 # 05-tools
 
-CLI productivity tools. Each install_X function from the former repo-
-root `install-cli-extensions.sh` is now its own script here, one tool
-per file.
+CLI productivity tools. Each install_X function from the former legacy
+CLI-extensions installer is now its own script here, one tool per file.
 
 ## Scope
 
