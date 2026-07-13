@@ -34,22 +34,33 @@ tealdeer_version() {
     tldr --version 2>/dev/null | awk 'NR == 1 { print $2 }'
 }
 
-tag="$(resolve_github_latest_tag "tealdeer-rs/tealdeer")"
-version="${tag#v}"
 current_version="$(tealdeer_version || true)"
 
-if [[ "$current_version" == "$version" ]]; then
+case "$(arch_slug)" in
+    x86_64) asset_arch='x86_64' ;;
+    aarch64) asset_arch='aarch64' ;;
+esac
+
+tag="$(resolve_github_latest_tag "tealdeer-rs/tealdeer" || true)"
+version=""
+version_label="latest"
+url="https://github.com/tealdeer-rs/tealdeer/releases/latest/download/tealdeer-linux-${asset_arch}-musl"
+
+if [[ -n "$tag" ]]; then
+    version="${tag#v}"
+    version_label="$tag"
+    url="https://github.com/tealdeer-rs/tealdeer/releases/download/${tag}/tealdeer-linux-${asset_arch}-musl"
+else
+    warn "Latest tealdeer release tag lookup failed; reinstalling via GitHub latest asset alias"
+fi
+
+if [[ -n "$version" && "$current_version" == "$version" ]]; then
     ok "tealdeer ${version} already installed"
 else
-    case "$(arch_slug)" in
-        x86_64) asset_arch='x86_64' ;;
-        aarch64) asset_arch='aarch64' ;;
-    esac
-
-    url="https://github.com/tealdeer-rs/tealdeer/releases/download/${tag}/tealdeer-linux-${asset_arch}-musl"
+    
     tmp="$(mktemp)"
 
-    info "Installing tealdeer ${tag} from official release..."
+    info "Installing tealdeer ${version_label} from official release..."
     curl_download "$url" "$tmp"
     install -m 0755 "$tmp" "$LOCAL_BIN/tldr-real"
     rm -f "$tmp"

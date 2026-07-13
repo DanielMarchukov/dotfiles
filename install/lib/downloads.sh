@@ -21,17 +21,41 @@ CARGO_INSTALL_CACHE_DIR="${CARGO_INSTALL_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cac
 # ---------------------------------------------------------------------------
 # curl helpers
 # ---------------------------------------------------------------------------
+curl_common_args() {
+    printf '%s\n' \
+        -fsSL \
+        --retry 5 \
+        --retry-delay 2 \
+        --retry-all-errors \
+        --connect-timeout 30
+}
+
 curl_download() {
-    curl -fsSL --retry 3 --retry-delay 2 --connect-timeout 15 -o "$2" "$1"
+    local -a args
+    mapfile -t args < <(curl_common_args)
+    curl "${args[@]}" -o "$2" "$1"
 }
 
 curl_stdout() {
-    curl -fsSL --retry 3 --retry-delay 2 --connect-timeout 15 "$1"
+    local -a args
+    mapfile -t args < <(curl_common_args)
+    curl "${args[@]}" "$1"
 }
 
 curl_effective_url() {
-    curl -fsSL --retry 3 --retry-delay 2 --connect-timeout 15 \
+    local -a args
+    mapfile -t args < <(curl_common_args)
+    curl "${args[@]}" \
         -o /dev/null -w '%{url_effective}' "$1"
+}
+
+github_api_curl_stdout() {
+    local -a args
+    mapfile -t args < <(curl_common_args)
+    curl "${args[@]}" \
+        -H 'Accept: application/vnd.github+json' \
+        -H 'User-Agent: dotfiles-bootstrap' \
+        "$1"
 }
 
 # ---------------------------------------------------------------------------
@@ -39,10 +63,18 @@ curl_effective_url() {
 # ---------------------------------------------------------------------------
 resolve_github_latest_tag() {
     local repo="$1"
-    local latest_url effective_url tag
+    local latest_url effective_url release_json tag
+
+    release_json="$(github_api_curl_stdout "https://api.github.com/repos/${repo}/releases/latest" 2>/dev/null || true)"
+    tag="$(printf '%s' "$release_json" | jq -r '.tag_name // empty' 2>/dev/null || true)"
+
+    if [[ -n "$tag" && "$tag" != "null" ]]; then
+        printf '%s\n' "$tag"
+        return 0
+    fi
 
     latest_url="https://github.com/${repo}/releases/latest"
-    effective_url="$(curl_effective_url "$latest_url")"
+    effective_url="$(curl_effective_url "$latest_url" 2>/dev/null || true)"
     tag="${effective_url##*/}"
 
     if [[ -z "$tag" || "$tag" == "latest" ]]; then

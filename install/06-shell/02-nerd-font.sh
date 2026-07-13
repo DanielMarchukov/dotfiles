@@ -24,6 +24,21 @@ require_command unzip
 
 NERD_FONTS_VERSION="v3.4.0"
 FONT_DIR="$HOME/.local/share/fonts"
+PROC_VERSION_PATH="${PROC_VERSION_PATH:-/proc/version}"
+
+resolve_windows_exe() {
+    local exe_name="$1"
+    local fallback_path="$2"
+
+    if command -v "$exe_name" >/dev/null 2>&1; then
+        command -v "$exe_name"
+    elif [[ -x "$fallback_path" ]]; then
+        printf '%s\n' "$fallback_path"
+    fi
+}
+
+WIN_CMD_EXE="${WIN_CMD_EXE:-$(resolve_windows_exe cmd.exe /mnt/c/Windows/System32/cmd.exe)}"
+WIN_REG_EXE="${WIN_REG_EXE:-$(resolve_windows_exe reg.exe /mnt/c/Windows/System32/reg.exe)}"
 
 # ---------------------------------------------------------------------------
 # Linux side (fontconfig / WSLg)
@@ -46,11 +61,11 @@ fi
 # Windows side (per-user, under WSL): copy the .ttf into the per-user Fonts
 # dir and register them under HKCU. Idempotent; requires Windows interop.
 # ---------------------------------------------------------------------------
-if grep -qi microsoft /proc/version 2>/dev/null && command -v reg.exe >/dev/null 2>&1; then
-    win_localappdata="$(cmd.exe /c 'echo %LOCALAPPDATA%' 2>/dev/null | tr -d '\r')"
+if grep -qi microsoft "$PROC_VERSION_PATH" 2>/dev/null && [[ -n "$WIN_CMD_EXE" ]] && [[ -n "$WIN_REG_EXE" ]]; then
+    win_localappdata="$("$WIN_CMD_EXE" /c 'echo %LOCALAPPDATA%' 2>/dev/null | tr -d '\r')"
     win_fonts_wsl="$([[ -n "$win_localappdata" ]] && wslpath "$win_localappdata" 2>/dev/null)/Microsoft/Windows/Fonts"
     reg_key='HKCU\Software\Microsoft\Windows NT\CurrentVersion\Fonts'
-    if [[ -n "$win_localappdata" ]] && ! reg.exe query "$reg_key" 2>/dev/null | grep -qi '0xProto'; then
+    if [[ -n "$win_localappdata" ]] && ! "$WIN_REG_EXE" query "$reg_key" 2>/dev/null | grep -qi '0xProto'; then
         info "Installing 0xProto Nerd Font on Windows (per-user)..."
         mkdir -p "$win_fonts_wsl"
         for f in "$FONT_DIR"/0xProto*.ttf; do
@@ -58,7 +73,7 @@ if grep -qi microsoft /proc/version 2>/dev/null && command -v reg.exe >/dev/null
             base="$(basename "$f")"
             cp -f "$f" "$win_fonts_wsl/$base"
             reg_name="$(printf '%s' "$base" | sed -E 's/\.ttf$//; s/0xProtoNerdFont/0xProto Nerd Font/; s/Mono/ Mono/; s/Propo/ Propo/; s/-/ /') (TrueType)"
-            reg.exe add "$reg_key" /v "$reg_name" /t REG_SZ \
+            "$WIN_REG_EXE" add "$reg_key" /v "$reg_name" /t REG_SZ \
                 /d "$(wslpath -w "$win_fonts_wsl/$base")" /f >/dev/null 2>&1 || true
         done
         ok "0xProto Nerd Font installed on Windows (restart your terminal to use it)"
