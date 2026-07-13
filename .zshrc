@@ -99,6 +99,14 @@ fi
 [[ -d "$HOME/.fzf/bin" ]] && export PATH="$HOME/.fzf/bin:$PATH"
 
 # =============================================================================
+# .NET SDK (installed to ~/.dotnet by bootstrap)
+# =============================================================================
+if [[ -d "$HOME/.dotnet" ]]; then
+  export DOTNET_ROOT="$HOME/.dotnet"
+  export PATH="$DOTNET_ROOT:$PATH"
+fi
+
+# =============================================================================
 # OH-MY-ZSH CONFIGURATION
 # =============================================================================
 # Powerlevel10k/gitstatus expects a real terminal. Skip the theme when zsh is

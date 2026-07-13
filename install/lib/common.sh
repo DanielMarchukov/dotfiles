@@ -40,6 +40,11 @@ export NVM_DIR="$HOME/.nvm"
 # shellcheck source=/dev/null
 [[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
 
+if [[ -d "$HOME/.dotnet" ]]; then
+    export DOTNET_ROOT="$HOME/.dotnet"
+    export PATH="$DOTNET_ROOT:$PATH"
+fi
+
 # ---------------------------------------------------------------------------
 # Platform detection
 # ---------------------------------------------------------------------------
