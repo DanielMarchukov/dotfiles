@@ -17,6 +17,7 @@ config.font_size = 11.0
 
 -- Colors: Catppuccin Mocha, matching the Neovim + tmux theme.
 config.color_scheme = "Catppuccin Mocha"
+config.window_background_opacity = 0.90
 
 -- On Windows, launch straight into WSL (first detected distro, so this stays
 -- portable across machines). On Linux/macOS, use the default login shell.
