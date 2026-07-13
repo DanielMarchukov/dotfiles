@@ -37,6 +37,14 @@ config.scrollback_lines = 10000
 config.audible_bell = "Disabled"
 config.adjust_window_size_when_changing_font_size = false
 
+-- No update nag; smoother redraw on high-refresh displays.
+config.check_for_updates = false
+config.max_fps = 120
+
+-- tmux (with tmux-resurrect + tmux-continuum) persists sessions, so closing a
+-- window never loses work — skip the confirmation prompt.
+config.window_close_confirmation = "NeverPrompt"
+
 -- Sixel works out of the box in WezTerm — that's what carries tdf's PDF
 -- preview through tmux (kitty graphics protocol does not survive tmux).
 
