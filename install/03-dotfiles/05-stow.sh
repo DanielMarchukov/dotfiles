@@ -159,6 +159,7 @@ stow \
     --ignore='windows' \
     --ignore='install' \
     --ignore='wezterm' \
+    --ignore='alacritty' \
     --ignore='bootstrap\.sh' \
     --ignore='install-nvim\.sh' \
     --ignore='README.*' \
