@@ -112,7 +112,7 @@ if [[ -d "$DOTFILES_DIR/.github" ]]; then
         target_path="$HOME/.github/$rel_path"
         mkdir -p "$(dirname "$target_path")"
         backup_if_real "$target_path"
-    done < <(find "$DOTFILES_DIR/.github" -type f | sort)
+    done < <(find "$DOTFILES_DIR/.github" -type f -not -path '*/workflows/*' | sort)
 fi
 
 # Items managed outside of stow — drop stale symlinks so stow's restow scan
@@ -162,6 +162,7 @@ stow \
     --ignore='alacritty' \
     --ignore='bootstrap\.sh' \
     --ignore='install-nvim\.sh' \
+    --ignore='justfile' \
     --ignore='README.*' \
     "$(basename "$DOTFILES_DIR")"
 
@@ -179,7 +180,7 @@ if [[ -d "$DOTFILES_DIR/.github" ]]; then
         target_path="$HOME/.github/$rel_path"
         ln -sfn "$repo_github_file" "$target_path"
         ok "Linked ~/.github/$rel_path"
-    done < <(find "$DOTFILES_DIR/.github" -type f | sort)
+    done < <(find "$DOTFILES_DIR/.github" -type f -not -path '*/workflows/*' | sort)
 fi
 
 ok "Dotfiles stowed"

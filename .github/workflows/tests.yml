@@ -1,0 +1,32 @@
+name: tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  suite:
+    name: hermetic test suite
+    runs-on: ubuntu-latest
+    steps:
+      # Submodules are intentionally NOT checked out: the suite is hermetic and
+      # the private .config/nvim submodules aren't reachable with the default
+      # token. Tests that would read submodule content skip themselves.
+      - uses: actions/checkout@v4
+      - name: Run test/run.sh
+        run: NO_COLOR=1 bash test/run.sh
+
+  shellcheck:
+    name: shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Lint shell scripts
+        run: |
+          shellcheck -x --severity=warning -e SC1090,SC1091,SC2088 \
+            bootstrap.sh install-nvim.sh \
+            install/lib/*.sh install/*/*.sh \
+            test/run.sh test/lib/*.sh test/verify-*.sh
