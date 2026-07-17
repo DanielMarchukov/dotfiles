@@ -6,6 +6,10 @@
 [window]
 padding = { x = 4, y = 2 }
 dynamic_title = true
+# tmux owns session UI; keep the host window borderless and match WezTerm's
+# previous 90% background opacity.
+decorations = "None"
+opacity = 0.90
 
 [scrolling]
 history = 10000
